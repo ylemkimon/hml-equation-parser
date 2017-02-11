@@ -84,3 +84,35 @@ def barRegularizer (strList: List[str]) -> List[str]:
                 idx = idx + 1
         idx = idx + 1
     return strList
+
+def fracRegularizer (strList: List[str]) -> List[str]:
+    '''
+    Regularize fractions.
+    
+    This involves replacing "over" to "frac", adding braces to "frac" if there isn't.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Fractions regualrized string list.
+    '''
+    for idx, elem in enumerate(strList):
+        if re.match("^.*frac.+", elem) != None:
+            sqrtLocation = elem.find("frac")
+            beforePart = elem[0:sqrtLocation]
+            fracPart = elem[sqrtLocation:sqrtLocation+4]
+            remainderPart = elem[sqrtLocation+4:]
+            del strList[idx]
+            strList.insert(idx, "\\frac")
+            strList.insert(idx+1, "}")
+            strList.insert(idx+1, remainderPart)
+            strList.insert(idx+1, "{")
+            strList.insert(idx+1, "}")
+            strList.insert(idx+1, beforePart)
+            strList.insert(idx+1, "{")
+    return strList
