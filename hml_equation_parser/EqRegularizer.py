@@ -116,3 +116,33 @@ def fracRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, beforePart)
             strList.insert(idx+1, "{")
     return strList
+
+def limRegularizer (strList: List[str]) -> List[str]:
+    for idx, elem in enumerate(strList):
+        if re.match("^lim$", elem) != None:
+            target = strList[idx+1]
+            if re.match("^_.+$", elem) != None:
+                underbar = target[0]
+                arrowLocation = elem.find("->")
+                beforeArrow = elem[1:arrowLocation]
+                afterArrow = elem[arrowLocation+2:]
+                del strList[idx+1]
+                strList.insert(idx+1, underbar)
+                strList.insert(idx+2, "}")
+                strList.insert(idx+2, afterArrow)
+                strList.insert(idx+2, beforeArrow)
+                strList.insert(idx+2, "{")
+        elif re.match("^lim_.+->.+$", elem) != None:
+            limPart = elem[0:3]
+            arrowLocation = elem.find("->")
+            beforeArrow = elem[4:arrowLocation]
+            arrowPart = elem[arrowLocation:arrowLocation+2]
+            afterArrow = elem[arrowLocation+2:]
+            del strList[idx]
+            strList.insert(idx, "\\"+limPart)
+            strList.insert(idx+1, "}")
+            strList.insert(idx+1, afterArrow)
+            strList.insert(idx+1, arrowPart)
+            strList.insert(idx+1, beforeArrow)
+            strList.insert(idx+1, "_{")
+    return strList

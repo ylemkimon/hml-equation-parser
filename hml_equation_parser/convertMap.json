@@ -79,6 +79,7 @@
     "prime": "'",
     "Partial": "\\partial",
     "INF": "\\infty",
+    "inf": "\\infty",
     "PROPTO": "\\propto",
     "lim": "\\lim",
     "Lim": "\\lim",
