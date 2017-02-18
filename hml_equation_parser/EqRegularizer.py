@@ -49,6 +49,79 @@ def matchCurlyBraces (strList: List[str]) -> List[str]:
     
     return strList
 
+def inEqualityRegularizer (strList: List[str]) -> List[str]:
+    '''
+    Regularize inequalities.
+    
+    This converts non ASCII characters to Latex inequality keywords.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Inequality regularized string list.
+    '''
+
+    for idx, elem in enumerate(strList):
+        print(idx, elem)
+        if elem == "＞":
+            del strList[idx]
+            strList.insert(idx, ">")
+        elif elem == "＜":
+            del strList[idx]
+            strList.insert(idx, "<")
+        elif re.match("^.+le.+$", elem) != None and elem != "\\leq":
+            inequalityLocation = elem.find("le")
+            beforePart = elem[0:inequalityLocation]
+            afterPart = elem[inequalityLocation+2:]
+            del strList[idx]
+            strList.insert(idx, afterPart)
+            strList.insert(idx, "\\leq")
+            strList.insert(idx, beforePart)
+        elif re.match("^le.+$", elem) != None:
+            afterPart = elem[2:]
+            del strList[idx]
+            strList.insert(idx, afterPart)
+            strList.insert(idx, "\\leq")
+        elif re.match("^.+le$", elem) != None:
+            inequalityLocation = elem.find("le")
+            beforePart = elem[0:inequalityLocation]
+            del strList[idx]
+            strList.insert(idx, "\\leq")
+            strList.insert(idx, beforePart)
+        elif elem == "le":
+            del strList[idx]
+            strList.insert(idx, "\\leq")
+        elif re.match("^.+ge.+$", elem) != None and elem != "\\geq":
+            inequalityLocation = elem.find("ge")
+            beforePart = elem[0:inequalityLocation]
+            afterPart = elem[inequalityLocation+2:]
+            del strList[idx]
+            strList.insert(idx, afterPart)
+            strList.insert(idx, "\\geq")
+            strList.insert(idx, beforePart)
+        elif re.match("^ge.+$", elem) != None:
+            afterPart = elem[2:]
+            del strList[idx]
+            strList.insert(idx, afterPart)
+            strList.insert(idx, "\\geq")
+        elif re.match("^.+ge$", elem) != None:
+            print("Before part exist. GEQ")
+            inequalityLocation = elem.find("ge")
+            beforePart = elem[0:inequalityLocation]
+            del strList[idx]
+            strList.insert(idx, "\\geq")
+            strList.insert(idx, beforePart)
+            print(strList)
+        elif elem == "ge":
+            del strList[idx]
+            strList.insert(idx, "\\geq")
+    return strList
+
 def sqrtRegularizer (strList: List[str]) -> List[str]:
     '''
     Regularize sqrts.
