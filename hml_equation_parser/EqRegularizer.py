@@ -274,8 +274,17 @@ def fracRegularizer (strList: List[str]) -> List[str]:
                     strList.insert(idx+5, "{")
                     strList.insert(idx+5, "}")
             else:
+                leftCurlyBrace = idx-2
+                isMatched = 1
+                while isMatched > 0:
+                    if strList[leftCurlyBrace] == "}":
+                        isMatched = isMatched + 1
+                    elif strList[leftCurlyBrace] == "{":
+                        isMatched = isMatched - 1
+                    leftCurlyBrace = leftCurlyBrace - 1
+                leftCurlyBrace = leftCurlyBrace + 1
                 del strList[idx]
-                strList.insert(idx-3, "\\frac")
+                strList.insert(leftCurlyBrace, "\\frac")
                 if strList[idx+1] != "{":
                     strList.insert(idx+1, "{")
                     strList.insert(idx+3, "}")
