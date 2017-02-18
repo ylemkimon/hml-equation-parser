@@ -1,7 +1,7 @@
 from typing import List
 import json, codecs, os
 from .hulkReplaceMethod import replaceAllMatrix, replaceAllBar, replaceRootOf, replaceFrac, replaceAllBrace
-from .EqRegularizer import sqrtRegularizer, barRegularizer, fracRegularizer, limRegularizer
+from .EqRegularizer import sqrtRegularizer, barRegularizer, fracRegularizer, limRegularizer, sumRegularizer
 
 with codecs.open(os.path.join(os.path.dirname(__file__),
                               "convertMap.json"),
@@ -47,6 +47,7 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
     strList = barRegularizer(strList)
     strList = fracRegularizer(strList)
     strList = limRegularizer(strList)
+    strList = sumRegularizer(strList)
     
     for key, candidate in enumerate(strList):
         if candidate in convertMap["convertMap"]:

@@ -118,6 +118,21 @@ def fracRegularizer (strList: List[str]) -> List[str]:
     return strList
 
 def limRegularizer (strList: List[str]) -> List[str]:
+    '''
+    Regularize limits.
+    
+    This involves adding curly braces if needed, and seperating necessary parts.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Limits regualrized string list.
+    '''
     for idx, elem in enumerate(strList):
         if re.match("^lim$", elem) != None:
             target = strList[idx+1]
@@ -145,4 +160,126 @@ def limRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, arrowPart)
             strList.insert(idx+1, beforeArrow)
             strList.insert(idx+1, "_{")
+    return strList
+
+def sumRegularizer (strList: List[str]) -> List[str]:
+    '''
+    Regularize limits.
+    
+    This involves adding curly braces if needed, and seperating parts.
+    Sum is just for representation, this regularizer regularizes Sum, Integral and if needed, more equations that has same format.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Limits regularized string list.
+    '''
+    regularizationTarget = ["sum", "integral"]
+    for rt in regularizationTarget:
+        #print(rt)
+        idx = 0
+        #for idx, elem in enumerate(strList):
+        while idx < len(strList):
+            elem = strList[idx]
+            if re.match("^" + rt + "_.+\^.+$", elem) != None:
+                '''
+                Case when 'sum', lower and upper part are all sticked together.
+                ex) sum_k=1^n
+                '''
+                underbarLocation = elem.find("_")
+                caretLocation = elem.find("^")
+                sumPart = elem[0:3]
+                lowerPart = elem[underbarLocation:caretLocation]
+                upperPart = elem[caretLocation:]
+                if lowerPart[1] != "{":
+                    lowerPart = "_{" + lowerPart[1:] + "}"
+                if upperPart[1] != "{":
+                    upperPart = "^{" + upperPart[1:] + "}"
+                del strList[idx]
+                strList.insert(idx, "\\sum")
+                strList.insert(idx+1, upperPart)
+                strList.insert(idx+1, lowerPart)
+                idx = idx + 1
+            elif re.match("^.+" + rt + "_.+\^.+$", elem) != None:
+                '''
+                Case when all sticked together, and there are additional text before 'sum'.
+                ex) M=sum_k=1^n
+                '''
+                underbarLocation = elem.find("_")
+                caretLocation = elem.find("^")
+                sumLocation = elem.find("sum")
+                beforePart = elem[0:sumLocation]
+                sumPart = elem[sumLocation:sumLocation+3]
+                lowerPart = elem[underbarLocation:caretLocation]
+                upperPart = elem[caretLocation:]
+                #print("sumPart: " + sumPart + ", lowerPart: " + lowerPart + ", upperPart: " + upperPart)
+                if lowerPart[1] != "{":
+                    lowerPart = "_{" + lowerPart[1:] + "}"
+                if upperPart[1] != "{":
+                    upperPart = "^{" + upperPart[1:] + "}"
+                del strList[idx]
+                strList.insert(idx, beforePart)
+                strList.insert(idx+1, upperPart)
+                strList.insert(idx+1, lowerPart)
+                strList.insert(idx+1, sumPart)
+            elif re.match("^.*" + rt + "$", elem) != None:
+                '''
+                Case when keyword 'sum' is seperated.
+                '''
+                target = strList[idx+1]
+                sumLocation = elem.find("sum")
+                beforePart = elem[0:sumLocation]
+                sumPart = elem[sumLocation:]
+                if re.match("^_.+\^.+$", target) != None:
+                    '''
+                    Case when lower and upper part is sticked together.
+                    '''
+                    underbarLocation = target.find("_")
+                    caretLocation = target.find("^")
+                    lowerPart = target[0:caretLocation]
+                    upperPart = target[caretLocation:]
+                    if lowerPart[1] != "{":
+                        lowerPart = "_{" + lowerPart[1:] + "}"
+                    if upperPart[1] != "{":
+                        upperPart = "^{" + upperPart[1:] + "}"
+                    #print("sumPart: " + sumPart + ", lowerPart: " + lowerPart + ", upperPart: " + upperPart)
+                    del strList[idx]
+                    strList.insert(idx, beforePart)
+                    strList.insert(idx+1, sumPart)
+                    del strList[idx+2]
+                    strList.insert(idx+2, upperPart)
+                    strList.insert(idx+2, lowerPart)
+                    idx = idx + 4
+                elif re.match("^_.+$", target) != None:
+                    '''
+                    Case when lower and upper parts are seperated.
+                    '''
+                    upperTarget = strList[idx+2]
+                    upperPart = "^{}"
+                    if re.match("^\^.+$", upperTarget) != None:
+                        '''
+                        Case when upper part exists.
+                        '''
+                        if upperTarget[1] != "{":
+                            upperPart = "^{" + upperTarget[1:] + "}"
+                        else:
+                            upperPart = upperTarget
+                    if target[1] != "{":
+                        lowerPart = "_{" + target[1:] + "}"
+                    #print("sumPart: " + sumPart + ", lowerPart: " + lowerPart + ", upperPart: " + upperPart)
+                    del strList[idx]
+                    strList.insert(idx, beforePart)
+                    strList.insert(idx+1, sumPart)
+                    del strList[idx+2]
+                    strList.insert(idx+2, lowerPart)
+                    del strList[idx+3]
+                    strList.insert(idx+3, upperPart)
+                    idx = idx + 4
+            else:
+                idx = idx + 1
     return strList
