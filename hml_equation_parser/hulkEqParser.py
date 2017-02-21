@@ -1,7 +1,7 @@
 from typing import List
 import json, codecs, os
 from .hulkReplaceMethod import replaceAllMatrix, replaceAllBar, replaceRootOf, replaceFrac, replaceAllBrace
-from .EqRegularizer import sqrtRegularizer, barRegularizer, fracRegularizer, limRegularizer, sumRegularizer, matchCurlyBraces, inEqualityRegularizer
+from .EqRegularizer import sqrtRegularizer, barRegularizer, fracRegularizer, limRegularizer, sumRegularizer, matchCurlyBraces, inEqualityRegularizer, bracketRegularizer
 
 with codecs.open(os.path.join(os.path.dirname(__file__),
                               "convertMap.json"),
@@ -43,6 +43,9 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
     
     strList = strConverted.split(' ')
 
+    print(strList)
+    strList = bracketRegularizer(strList)
+    
     strList = list(filter(lambda x: x != "", strList))
     strList = matchCurlyBraces(strList)
     strList = inEqualityRegularizer(strList)

@@ -49,6 +49,36 @@ def matchCurlyBraces (strList: List[str]) -> List[str]:
     
     return strList
 
+def bracketRegularizer (strList: List[str]) -> List[str]:
+    '''
+    Regularize bracket format.
+    'LEFT', 'RIGHT' signs and their equivalents are converted to regularized form.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Bracket regularized list of strings.
+    '''
+    for idx, elem in enumerate(strList):
+        if re.match('^(left|LEFT)(\(|\{|\[)$', elem) != None:
+            directionKeyword = "\\left"
+            bracketKeyword = elem[4:]
+            del strList[idx]
+            strList.insert(idx, bracketKeyword)
+            strList.insert(idx, directionKeyword)
+        elif re.match('^(right|RIGHT)(\)|\}|\])$', elem) != None:
+            directionKeyword = "\\right"
+            bracketKeyword = elem[5:]
+            del strList[idx]
+            strList.insert(idx, bracketKeyword)
+            strList.insert(idx, directionKeyword)
+    return strList
+
 def inEqualityRegularizer (strList: List[str]) -> List[str]:
     '''
     Regularize inequalities.
@@ -74,7 +104,7 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
         elif elem == "＜":
             del strList[idx]
             strList.insert(idx, "<")
-        elif re.match("^.+le.+$", elem) != None and elem != "\\leq":
+        elif re.match("^.+le.+$", elem) != None and elem != "\\leq" and elem != "\\left":
             inequalityLocation = elem.find("le")
             beforePart = elem[0:inequalityLocation]
             afterPart = elem[inequalityLocation+2:]
@@ -308,6 +338,8 @@ def limRegularizer (strList: List[str]) -> List[str]:
     '''
     for idx, elem in enumerate(strList):
         if re.match("^lim$", elem) != None:
+            del strList[idx]
+            strList.insert(idx, "\\lim")
             target = strList[idx+1]
             if re.match("^_.+$", elem) != None:
                 underbar = target[0]
@@ -333,6 +365,10 @@ def limRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, arrowPart)
             strList.insert(idx+1, beforeArrow)
             strList.insert(idx+1, "_{")
+        elif re.match("^lim_$", elem) != None:
+            del strList[idx]
+            strList.insert(idx, "_")
+            strList.insert(idx, "\\lim")
     return strList
 
 def sumRegularizer (strList: List[str]) -> List[str]:
