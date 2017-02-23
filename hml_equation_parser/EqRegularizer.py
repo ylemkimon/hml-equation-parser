@@ -49,6 +49,60 @@ def matchCurlyBraces (strList: List[str]) -> List[str]:
     
     return strList
 
+def textRegularizer (strList: List[str]) -> List[str]:
+    '''
+    Regularize texts.
+    This includes rounding strings containing only non-ascii characters in "\\text" keyword.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Text regularized string list.
+    '''
+    for idx, elem in enumerate(strList):
+        if re.match("^[^\x00-\x7F]+$", elem) != None:
+            targetString = elem
+            del strList[idx]
+            strList.insert(idx, "\\text{"+targetString+"}")
+        elif re.match("^[ -~]*$", elem) == None:
+            target = elem
+            del strList[idx]
+            cnt = 0
+            nonAsciiCnt = 0
+            prevAsciiStart = 0
+            tempList = []
+            while cnt < len(target):
+                if re.match("^[ -~]$", target[cnt]) == None:
+                    nonAsciiCnt = nonAsciiCnt + 1
+                    cnt = cnt + 1
+                else:
+                    if nonAsciiCnt > 0:
+                        asciiPart = target[prevAsciiStart:cnt-nonAsciiCnt]
+                        nonAsciiPart = target[cnt-nonAsciiCnt:cnt]
+                        tempList.insert(0, asciiPart)
+                        tempList.insert(0, nonAsciiPart)
+                        prevAsciiStart = cnt
+                        nonAsciiCnt = 0
+                        cnt = cnt + 1
+                    else:
+                        cnt = cnt + 1
+            if nonAsciiCnt > 0:
+                asciiPart = target[prevAsciiStart:cnt-nonAsciiCnt]
+                nonAsciiPart = target[cnt-nonAsciiCnt:cnt]
+                tempList.insert(0, asciiPart)
+                tempList.insert(0, nonAsciiPart)
+            else:
+                asciiPart = target[prevAsciiStart:cnt]
+                tempList.insert(0, asciiPart)
+            for ts in tempList:
+                strList.insert(idx, ts)
+    return strList
+
 def fontRegularizer (strList: List[str]) -> List[str]:
     '''
     Regularize fonts.
@@ -100,7 +154,7 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                         strList.insert(idx, "\\mathbf")
                     elif tf == "it" or tf == "IT":
                         strList.insert(idx, "\\mathit")
-    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle"]
+    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cdot"]
     for sk in specialKeywords:
         idx = 0
         while idx < len(strList):
@@ -230,6 +284,17 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, afterPart)
             strList.insert(idx, bracketKeyword)
             strList.insert(idx, directionKeyword)
+        elif re.match('^.*(left|LEFT)$', elem) != None and elem != "\\left":
+            if strList[idx+1] == '(' or strList[idx+1] == '{' or strList[idx+1] == '[':
+                directionKeyword = "\\left"
+                directionKeywordLocation = elem.find("left")
+                if directionKeywordLocation == -1:
+                    directionKeywordLocation = elem.find("LEFT")
+                beforePart = elem[0:directionKeywordLocation]
+                del strList[idx]
+                strList.insert(idx, directionKeyword)
+                if beforePart != "":
+                    strList.insert(idx, beforePart)
         elif re.match('^(right|RIGHT)(\)|\}|\])$', elem) != None:
             directionKeyword = "\\right"
             bracketKeyword = elem[5:]
@@ -244,6 +309,17 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, afterPart)
             strList.insert(idx, bracketKeyword)
             strList.insert(idx, directionKeyword)
+        elif re.match('^.*(right|RIGHT)$', elem) != None and elem != "\\right":
+            if strList[idx+1] == ')' or strList[idx+1] == '}' or strList[idx+1] == ']':
+                directionKeyword = "\\right"
+                directionKeywordLocation = elem.find("right")
+                if directionKeywordLocation == -1:
+                    directionKeywordLocation = elem.find("RIGHT")
+                beforePart = elem[0:directionKeywordLocation]
+                del strList[idx]
+                strList.insert(idx, directionKeyword)
+                if beforePart != "":
+                    strList.insert(idx, beforePart)
         '''elif re.match('^.*\(.*$', elem) != None and re.match('^.*(LEFT|left)\(.*$', elem) == None and strList[idx-1] != "\\left":
             leftBracketLocation = elem.find("(")
             beforePart = elem[0:leftBracketLocation]
@@ -386,17 +462,22 @@ def expRegularizer (strList: List[str]) -> List[str]:
     '''
     regularizationTarget = ["^", "_"]
     for rt in regularizationTarget:
-        for idx, elem in enumerate(strList):
+        idx = 0
+        while idx < len(strList):
+        #for idx, elem in enumerate(strList):
+            elem = strList[idx]
             if re.match("^.+" + "\\" + rt + ".+$", elem) != None and "{" not in elem and "}" not in elem:
                 exponentLocation = elem.find(rt)
                 beforePart = elem[0:exponentLocation]
                 afterPart = elem[exponentLocation+1:]
                 del strList[idx]
                 strList.insert(idx, "}")
+                strList.insert(idx, "}")
                 strList.insert(idx, afterPart)
                 strList.insert(idx, "{")
                 strList.insert(idx, rt)
                 strList.insert(idx, beforePart)
+                strList.insert(idx, "{")
             elif re.match("^" + "\\" + rt + ".+$", elem) != None and "{" not in elem and "}" not in elem:
                 afterPart = elem[1:]
                 del strList[idx]
@@ -404,6 +485,65 @@ def expRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, afterPart)
                 strList.insert(idx, "{")
                 strList.insert(idx, rt)
+            elif re.match("^.+" + "\\" + rt + "$", elem) != None and "{" not in elem and "}" not in elem:
+                exponentLocation = elem.find(rt)
+                beforePart = elem[0:exponentLocation]
+                del strList[idx]
+                strList.insert(idx, rt)
+                #strList.insert(idx, "}")
+                strList.insert(idx, beforePart)
+                #strList.insert(idx, "{")
+                if strList[idx+2] == "{":
+                    rightBracketLocation = idx+3
+                    rightBracketMatch = 1
+                    while rightBracketMatch > 0:
+                        if strList[rightBracketLocation] == "{":
+                            rightBracketMatch = rightBracketMatch + 1
+                        elif strList[rightBracketLocation] == "}":
+                            rightBracketMatch = rightBracketMatch - 1
+                        rightBracketLocation = rightBracketLocation + 1
+                    strList.insert(rightBracketLocation, "}")
+                    strList.insert(idx, "{")
+                else:
+                    strList.insert(idx, "{")
+                    strList.insert(idx+4, "}")
+            '''elif re.match("^\\" + rt + "$", elem) != None:
+                #if strList[idx-1] != "}":
+                #    strList.insert(idx-1, "{")
+                #    strList.insert(idx, "}")
+                #if strList[idx+3] != "{":
+                #    strList.insert(idx+3, "{")
+                #    strList.insert(idx+5, "}")
+                if strList[idx+1] != "{":
+                    strList.insert(idx+1, "{")
+                    strList.insert(idx+3, "}")
+                outerBracketLocationRight = idx+2
+                outerBracketRightMatch = 1
+                while outerBracketRightMatch > 0:
+                    if strList[outerBracketLocationRight] == "{":
+                        outerBracketRightMatch = outerBracketRightMatch + 1
+                    elif strList[outerBracketLocationRight] == "}":
+                        outerBracketRightMatch = outerBracketRightMatch - 1
+                    outerBracketLocationRight = outerBracketLocationRight + 1
+                outerBracketLocationRight = outerBracketLocationRight - 1
+                if strList[idx-1] == "}":
+                    outerBracketLocationLeft = idx-2
+                    outerBracketLeftMatch = 1
+                    while outerBracketLeftMatch > 0:
+                        if strList[outerBracketLocationLeft] == "}":
+                            outerBracketLeftMatch = outerBracketLeftMatch + 1
+                        elif strList[outerBracketLocationLeft] == "{":
+                            outerBracketLeftMatch = outerBracketLeftMatch - 1
+                        outerBracketLocationLeft = outerBracketLocationLeft + 1
+                    outerBracketLocationLeft = outerBracketLocationLeft - 1
+                    strList.insert(outerBracketLocationLeft, "{")
+                    strList.insert(outerBracketLocationRight+1, "}")
+                    idx = idx + 1
+                else:
+                    strList.insert(idx-1, "{")
+                    strList.insert(outerBracketLocationRight+1, "}")
+                    idx = idx + 1'''
+            idx = idx + 1
     return strList
 
 def sqrtRegularizer (strList: List[str]) -> List[str]:
@@ -434,10 +574,10 @@ def sqrtRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, remainderPart)
             strList.insert(idx+1, "{")
             strList.insert(idx+1, sqrtPart)
-        elif re.match("^.*root.+", elem) != None:
+        elif re.match("^.*root.+$", elem) != None:
             sqrtLocation = elem.find("root")
             beforePart = elem[0:sqrtLocation]
-            sqrtPart = "sqrt"
+            sqrtPart = "\\sqrt"
             remainderPart = elem[sqrtLocation+4:]
             del strList[idx]
             strList.insert(idx, beforePart)
@@ -445,6 +585,13 @@ def sqrtRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, remainderPart)
             strList.insert(idx+1, "{")
             strList.insert(idx+1, sqrtPart)
+        elif re.match("^.*root$", elem) != None:
+            sqrtLocation = elem.find("root")
+            beforePart = elem[0:sqrtLocation]
+            sqrtPart = "\\sqrt"
+            del strList[idx]
+            strList.insert(idx, sqrtPart)
+            strList.insert(idx, beforePart)
     return strList
 
 def barRegularizer (strList: List[str]) -> List[str]:
@@ -541,11 +688,25 @@ def fracRegularizer (strList: List[str]) -> List[str]:
             fracPart = elem[fracLocation:fracLocation+4]
             remainderPart = elem[fracLocation+4:]
             if strList[idx-1] == "}":
+                leftBracketLocation = idx-2
+                leftBracketMatch = 1
+                while leftBracketMatch > 0:
+                    if strList[leftBracketLocation] == "}":
+                        leftBracketMatch = leftBracketMatch + 1
+                    elif strList[leftBracketLocation] == "{":
+                        leftBracketMatch = leftBracketMatch - 1
+                    leftBracketLocation = leftBracketLocation - 1
+                leftBracketLocation = leftBracketLocation + 1
                 del strList[idx]
-                strList.insert(idx, "}")
-                strList.insert(idx, remainderPart)
-                strList.insert(idx, "{")
-                strList.insert(idx-3, "\\frac")
+                strList.insert(leftBracketLocation, "\\frac")
+                strList.insert(idx+1, "}")
+                strList.insert(idx+1, remainderPart)
+                strList.insert(idx+1, "{")
+                #del strList[idx]
+                #strList.insert(idx, "}")
+                #strList.insert(idx, remainderPart)
+                #strList.insert(idx, "{")
+                #strList.insert(idx-3, "\\frac")
             else:
                 beforePart = strList[idx-1]
                 del strList[idx]
@@ -567,7 +728,7 @@ def fracRegularizer (strList: List[str]) -> List[str]:
                 del strList[idx+2]
                 strList.insert(idx-1, "\\frac")
                 if strList[idx+3] != "{":
-                    strList.insert(idx+5, "{")
+                    strList.insert(idx+3, "{")
                     strList.insert(idx+5, "}")
             else:
                 leftCurlyBrace = idx-2
