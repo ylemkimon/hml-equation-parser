@@ -65,7 +65,7 @@ def fontRegularizer (strList: List[str]) -> List[str]:
     out : List[str]
         Font regularized string list.
     '''
-    targetFonts = ["rm", "bold", "it"]
+    targetFonts = ["rm", "RM", "bold", "BOLD", "it", "IT"]
     for tf in targetFonts:
         for idx, elem in enumerate(strList):
             if re.match("^" + tf + ".+$", elem) != None:
@@ -74,27 +74,38 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, "}")
                 strList.insert(idx, afterPart)
                 strList.insert(idx, "{")
-                if tf == "rm":
+                if tf == "rm" or tf == "RM":
                     strList.insert(idx, "\\mathrm")
-                elif tf == "bold":
+                elif tf == "bold" or tf == "BOLD":
                     strList.insert(idx, "\\mathbf")
-                elif tf == "it":
+                elif tf == "it" or tf == "IT":
                     strList.insert(idx, "\\mathit")
             elif re.match("^" + tf + "$", elem) != None:
                 target = strList[idx+1]
                 if (target != "{"):
                     del strList[idx]
-                    if tf == "rm":
+                    if tf == "rm" or tf == "RM":
                         strList.insert(idx, "\\mathrm")
-                    elif tf == "bold":
+                    elif tf == "bold" or tf == "BOLD":
                         strList.insert(idx, "\\mathbf")
-                    elif tf == "it":
+                    elif tf == "it" or tf == "IT":
                         strList.insert(idx, "\\mathit")
                     strList.insert(idx+2, "}")
                     strList.insert(idx+1, "{")
-    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma"]
+                else:
+                    del strList[idx]
+                    if tf == "rm" or tf == "RM":
+                        strList.insert(idx, "\\mathrm")
+                    elif tf == "bold" or tf == "BOLD":
+                        strList.insert(idx, "\\mathbf")
+                    elif tf == "it" or tf == "IT":
+                        strList.insert(idx, "\\mathit")
+    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle"]
     for sk in specialKeywords:
-        for idx, elem in enumerate(strList):
+        idx = 0
+        while idx < len(strList):
+        #for idx, elem in enumerate(strList):
+            elem = strList[idx]
             if re.match("^.+"+sk+".+$", elem) != None:
                 keywordLocation = elem.find(sk)
                 beforePart = elem[0:keywordLocation]
@@ -104,14 +115,24 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, afterPart)
                 strList.insert(idx, "\\"+keywordPart)
                 strList.insert(idx, beforePart)
+            elif re.match("^.+"+sk+"$", elem) != None:
+                keywordLocation = elem.find(sk)
+                beforePart = elem[0:keywordLocation]
+                keywordPart = elem[keywordLocation:keywordLocation+len(sk)]
+                if beforePart != "\\":
+                    del strList[idx]
+                    strList.insert(idx, "\\"+keywordPart)
+                    strList.insert(idx, beforePart)
             elif re.match("^"+sk+".+$", elem) != None:
+                keywordPart = elem[0:len(sk)]
                 afterPart = elem[len(sk):]
                 del strList[idx]
                 strList.insert(idx, afterPart)
-                strList.insert(idx, "\\"+sk)
+                strList.insert(idx, "\\"+keywordPart)
             elif re.match("^"+sk+"$", elem) != None:
                 del strList[idx]
                 strList.insert(idx, "\\"+sk)
+            idx = idx + 1
     matrixKeywords = ["matrix", "cases"]
     for mk in matrixKeywords:
         for idx, elem in enumerate(strList):
@@ -155,6 +176,28 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                             rightBracketLocation = rightBracketLocation + 1
                     strList.insert(rightBracketLocation+1, "}")
                     strList.insert(idx, "{")
+    return strList
+
+def backslashRemover (strList: List[str]) -> List[str]:
+    '''
+    Removes redundant backslashes.
+    ex) \O, \ABC, \AB and so on.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Redundant backslash removed string list.
+    '''
+    for idx, elem in enumerate(strList):
+        if re.match("^\\\\[A-Z]{1,4}$", elem) != None:
+            remainderPart = elem[1:]
+            del strList[idx]
+            strList.insert(idx, remainderPart)
     return strList
 
 def bracketRegularizer (strList: List[str]) -> List[str]:
@@ -201,6 +244,58 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, afterPart)
             strList.insert(idx, bracketKeyword)
             strList.insert(idx, directionKeyword)
+        '''elif re.match('^.*\(.*$', elem) != None and re.match('^.*(LEFT|left)\(.*$', elem) == None and strList[idx-1] != "\\left":
+            leftBracketLocation = elem.find("(")
+            beforePart = elem[0:leftBracketLocation]
+            afterPart = elem[leftBracketLocation+1:]
+            del strList[idx]
+            if afterPart != '':
+                strList.insert(idx, afterPart)
+            strList.insert(idx, "(")
+            strList.insert(idx, "\\left")
+            if beforePart != '':
+                strList.insert(idx, beforePart)'''
+        '''elif re.match('^.*\).*$', elem) != None and re.match('^.*(RIGHT|right)\).*$', elem) == None and strList[idx-1] != "\\right":
+            rightBracketLocation = elem.find(")")
+            beforePart = elem[0:rightBracketLocation]
+            afterPart = elem[rightBracketLocation+1:]
+            del strList[idx]
+            if afterPart != '':
+                strList.insert(idx, afterPart)
+            strList.insert(idx, ")")
+            strList.insert(idx, "\\right")
+            if beforePart != '':
+                strList.insert(idx, beforePart)'''
+    for idx, elem in enumerate(strList):
+        if re.match('^.*(\(|\{|\[).+(\)|\}|\]).*$', elem) != None and re.match('^.*(right|RIGHT)(\)|\}|\]).*', elem) == None:
+            print(elem)
+            leftBracketLocation = elem.find("(")
+            if leftBracketLocation == -1:
+                leftBracketLocation = elem.find("{")
+                if leftBracketLocation == -1:
+                    leftBracketLocation = elem.find("[")
+            rightBracketLocation = elem.find(")")
+            if rightBracketLocation == -1:
+                rightBracketLocation = elem.find("}")
+                if rightBracketLocation == -1:
+                    rightBracketLocation = elem.find("]")
+            beforePart = elem[0:leftBracketLocation]
+            leftBracket = elem[leftBracketLocation]
+            middlePart = elem[leftBracketLocation+1:rightBracketLocation]
+            rightBracket = elem[rightBracketLocation]
+            afterPart = elem[rightBracketLocation+1:]
+            del strList[idx]
+            if afterPart != "":
+                strList.insert(idx, afterPart)
+            strList.insert(idx, rightBracket)
+            strList.insert(idx, "\\right")
+            strList.insert(idx, middlePart)
+            strList.insert(idx, leftBracket)
+            strList.insert(idx, "\\left")
+            if beforePart != "":
+                strList.insert(idx, beforePart)
+            #del strList[idx]
+            #strList.insert("")
     return strList
 
 def inEqualityRegularizer (strList: List[str]) -> List[str]:
@@ -221,7 +316,6 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
     '''
 
     for idx, elem in enumerate(strList):
-        print(idx, elem)
         if elem == "＞":
             del strList[idx]
             strList.insert(idx, ">")
@@ -241,7 +335,7 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
             del strList[idx]
             strList.insert(idx, afterPart)
             strList.insert(idx, "\\leq")
-        elif re.match("^.+le$", elem) != None:
+        elif re.match("^.+le$", elem) != None and elem != "angle":
             inequalityLocation = elem.find("le")
             beforePart = elem[0:inequalityLocation]
             del strList[idx]
@@ -264,13 +358,11 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, afterPart)
             strList.insert(idx, "\\geq")
         elif re.match("^.+ge$", elem) != None:
-            print("Before part exist. GEQ")
             inequalityLocation = elem.find("ge")
             beforePart = elem[0:inequalityLocation]
             del strList[idx]
             strList.insert(idx, "\\geq")
             strList.insert(idx, beforePart)
-            print(strList)
         elif elem == "ge":
             del strList[idx]
             strList.insert(idx, "\\geq")
@@ -513,6 +605,7 @@ def limRegularizer (strList: List[str]) -> List[str]:
     '''
     for idx, elem in enumerate(strList):
         if re.match("^lim$", elem) != None:
+            #print("Case when limit is seperated by itself. strList: " + str(strList))
             del strList[idx]
             strList.insert(idx, "\\lim")
             target = strList[idx+1]
@@ -529,6 +622,7 @@ def limRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx+2, beforeArrow)
                 strList.insert(idx+2, "{")
         elif re.match("^lim_.+->.+$", elem) != None:
+            #print("Case when limit and both arrow part are sticked together. strList: " + str(strList))
             limPart = elem[0:3]
             arrowLocation = elem.find("->")
             beforeArrow = elem[4:arrowLocation]
@@ -541,11 +635,15 @@ def limRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, "\\rightarrow")
             strList.insert(idx+1, beforeArrow)
             strList.insert(idx+1, "_{")
+            #print("After slicing sticked parts. strList: " + str(strList))
         elif re.match("^lim_$", elem) != None:
+            #print("Case when limit and only underbar is sticked together. strList: " + str(strList))
             del strList[idx]
             strList.insert(idx, "_")
             strList.insert(idx, "\\lim")
+    for idx, elem in enumerate(strList):
         if re.match("^.+->.+$", elem) != None:
+            #print("Case when rightarrow is sticked together with before and after parts. strList: " + str(strList))
             arrowLocation = elem.find("->")
             beforePart = elem[0:arrowLocation]
             afterPart = elem[arrowLocation+2:]
@@ -554,17 +652,20 @@ def limRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, "\\rightarrow")
             strList.insert(idx, beforePart)
         elif re.match("^.+->$", elem) != None:
+            #print("Case when rightarrow is sticked together with before part. strList: " + str(strList))
             arrowLocation = elem.find("->")
             beforePart = elem[0:arrowLocation]
             del strList[idx]
             strList.insert(idx, "\\rightarrow")
             strList.insert(idx, beforePart)
         elif re.match("^->.+$", elem) != None:
+            #print("Case when rightarrow is sticked together with after part. strList: " + str(strList))
             afterPart = elem[2:]
             del strList[idx]
             strList.insert(idx, afterPart)
             strList.insert("\\rightarrow")
         elif re.match("^->$", elem) != None:
+            #print("Case when righrarrow is by itself. strList: " + str(strList))
             del strList[idx]
             strList.insert(idx, "\\rightarrow")
     return strList
@@ -595,9 +696,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
             elem = strList[idx]
             #print(elem)
             if re.match("^" + rt + "_.+\^.+$", elem) != None:
-                print("All sticked together")
-                print(strList)
-                print(idx)
                 '''
                 Case when 'sum', lower and upper part are all sticked together.
                 ex) sum_k=1^n
@@ -607,7 +705,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                 sumPart = elem[0:3]
                 lowerPart = elem[underbarLocation:caretLocation]
                 upperPart = elem[caretLocation:]
-                print("sumPart: " + sumPart + ", lowerPart: " + lowerPart + ", upperPart: " + upperPart)
                 if lowerPart[1] != "{":
                     #lowerPart = "_{" + lowerPart[1:] + "}"
                     lowerPartLst = ["_", "{", lowerPart[1:], "}"]
@@ -624,9 +721,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                 strList = insertList(idx+1, strList, lowerPartLst)
                 idx = idx + 1
             elif re.match("^.+" + rt + "_.+\^.+$", elem) != None:
-                print("All sticked together + Additional text.")
-                print(strList)
-                print(idx)
                 '''
                 Case when all sticked together, and there are additional text before 'sum'.
                 ex) M=sum_k=1^n
@@ -638,7 +732,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                 sumPart = elem[sumLocation:sumLocation+3]
                 lowerPart = elem[underbarLocation:caretLocation]
                 upperPart = elem[caretLocation:]
-                print("sumPart: " + sumPart + ", lowerPart: " + lowerPart + ", upperPart: " + upperPart)
                 if lowerPart[1] != "{":
                     #lowerPart = "_{" + lowerPart[1:] + "}"
                     lowerPartLst = ["_", "{", lowerPart[1:], "}"]
@@ -654,7 +747,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                 #strList.insert(idx+1, lowerPart)
                 strList = insertList(idx+1, strList, lowerPartLst)
                 strList.insert(idx+1, sumPart)
-                print(strList)
             elif re.match("^.*" + rt + "$", elem) != None:
                 '''
                 Case when keyword 'sum' is seperated.
@@ -664,9 +756,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                 beforePart = elem[0:sumLocation]
                 sumPart = elem[sumLocation:]
                 if re.match("^_.+\^.+$", target) != None:
-                    print("Lower and upper sticked together.")
-                    print(strList)
-                    print(idx)
                     '''
                     Case when lower and upper part is sticked together.
                     '''
@@ -682,7 +771,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                     if upperPart[1] != "{":
                         #upperPart = "^{" + upperPart[1:] + "}"
                         upperPartLst = ["^", "{", upperPart[1:], "}"]
-                    print("sumPart: " + sumPart + ", lowerPart: " + lowerPart + ", upperPart: " + upperPart)
                     del strList[idx]
                     #strList.insert(idx, beforePart)
                     #strList.insert(idx+1, sumPart)
@@ -704,9 +792,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                         #idx = idx + 4
                     idx = idx + 1
                 elif re.match("^_.+$", target) != None:
-                    print("Lower and upper seperated.")
-                    print(strList)
-                    print(idx)
                     '''
                     Case when lower and upper parts are seperated.
                     '''
@@ -727,7 +812,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                     if target[1] != "{":
                         #lowerPart = "_{" + target[1:] + "}"
                         lowerPartLst = ["_", "{", target[1:], "}"]
-                    print("sumPart: " + sumPart + ", lowerPart: " + lowerPart + ", upperPart: " + upperPart)
                     del strList[idx]
                     #strList.insert(idx, beforePart)
                     #strList.insert(idx+1, sumPart)
@@ -752,8 +836,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                         #idx = idx + 4
                     idx = idx + 1
                 elif target == "_":
-                    print(strList)
-                    print(idx)
                     '''
                     Case when lower part is seperated from keyword.
                     '''
@@ -767,7 +849,6 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                             isMatched = isMatched - 1
                         rightCurlyBrace = rightCurlyBrace + 1
                     rightCurlyBrace = rightCurlyBrace - 1
-                    print("rightCurlyBrace: " + str(rightCurlyBrace))
                     if strList[rightCurlyBrace+1] == "^":
                         '''
                         Case when upper part has curly braces.
@@ -808,5 +889,4 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                     idx = idx + 1
             else:
                 idx = idx + 1
-    print("strList: " + str(strList))
     return strList
