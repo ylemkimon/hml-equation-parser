@@ -49,6 +49,48 @@ def matchCurlyBraces (strList: List[str]) -> List[str]:
     
     return strList
 
+def matchBraces (strList: List[str]) -> List[str]:
+    '''
+    Match braces except curly ones.
+    This process will add "\\right" with dot(.) after it if braces are not closed.
+    This is done because LaTeX renderes will not render unclosed braces.
+    
+    After applying all regularizers, apply this.
+
+    Parameters
+    ----------------------
+    strList : List[str]
+        List of strings, splitted by whitespace from hml equation string.
+    
+    Returns
+    ----------------------
+    out : List[str]
+        Bracket matched(except curly ones) string list.
+    '''
+    bracketCount = 0
+    for idx, elem in enumerate(strList):
+        if elem == "\\left":
+            bracketCount = bracketCount + 1
+        elif elem == "\\right":
+            bracketCount = bracketCount - 1
+    if bracketCount > 0:
+        while bracketCount > 0:
+            strList.insert(len(strList), "\\right")
+            strList.insert(len(strList), ".")
+            bracketCount = bracketCount - 1
+    bracketCount = 0
+    for idx, elem in reversed(list(enumerate(strList))):
+        if elem == "\\left":
+            bracketCount = bracketCount - 1
+        elif elem == "\\right":
+            bracketCount = bracketCount + 1
+    if bracketCount > 0:
+        while bracketCount > 0:
+            strList.insert(0, ".")
+            strList.insert(0, "\\left")
+            bracketCount = bracketCount - 1
+    return strList
+
 def textRegularizer (strList: List[str]) -> List[str]:
     '''
     Regularize texts.
@@ -154,38 +196,58 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                         strList.insert(idx, "\\mathbf")
                     elif tf == "it" or tf == "IT":
                         strList.insert(idx, "\\mathit")
-    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cdot"]
+    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cdot", "CDOT", "times", "TIMES", "triangle"]
+    keywordMap = {
+        "sin": "\\sin",
+        "cos": "\\cos",
+        "tan": "\\tan",
+        "ln": "\\ln",
+        "log": "\\log",
+        "alpha": "\\alpha",
+        "beta": "\\beta",
+        "gamma": "\\gamma",
+        "theta": "\\theta",
+        "pi": "\\pi",
+        "sigma": "\\sigma",
+        "angle": "\\angle",
+        "cap": "\\cap",
+        "cdot": "\\cdot",
+        "CDOT": "\\cdot",
+        "times": "\\times",
+        "TIMES": "\\times",
+        "triangle": "\\triangle"
+    }
     for sk in specialKeywords:
         idx = 0
         while idx < len(strList):
         #for idx, elem in enumerate(strList):
             elem = strList[idx]
-            if re.match("^.+"+sk+".+$", elem) != None:
+            if re.match("^.+"+sk+".+$", elem) != None and not elem in specialKeywords:
                 keywordLocation = elem.find(sk)
                 beforePart = elem[0:keywordLocation]
                 keywordPart = elem[keywordLocation:keywordLocation+len(sk)]
                 afterPart = elem[keywordLocation+len(sk):]
                 del strList[idx]
                 strList.insert(idx, afterPart)
-                strList.insert(idx, "\\"+keywordPart)
+                strList.insert(idx, keywordMap[sk])
                 strList.insert(idx, beforePart)
-            elif re.match("^.+"+sk+"$", elem) != None:
+            elif re.match("^.+"+sk+"$", elem) != None and not elem in specialKeywords:
                 keywordLocation = elem.find(sk)
                 beforePart = elem[0:keywordLocation]
                 keywordPart = elem[keywordLocation:keywordLocation+len(sk)]
                 if beforePart != "\\":
                     del strList[idx]
-                    strList.insert(idx, "\\"+keywordPart)
+                    strList.insert(idx, keywordMap[sk])
                     strList.insert(idx, beforePart)
-            elif re.match("^"+sk+".+$", elem) != None:
+            elif re.match("^"+sk+".+$", elem) != None and not elem in specialKeywords:
                 keywordPart = elem[0:len(sk)]
                 afterPart = elem[len(sk):]
                 del strList[idx]
                 strList.insert(idx, afterPart)
-                strList.insert(idx, "\\"+keywordPart)
+                strList.insert(idx, keywordMap[sk])
             elif re.match("^"+sk+"$", elem) != None:
                 del strList[idx]
-                strList.insert(idx, "\\"+sk)
+                strList.insert(idx, keywordMap[sk])
             idx = idx + 1
     matrixKeywords = ["matrix", "cases"]
     for mk in matrixKeywords:
@@ -320,6 +382,14 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, directionKeyword)
                 if beforePart != "":
                     strList.insert(idx, beforePart)
+        elif re.match("^(\(|\[)$", elem) != None:
+            if idx > 0 and strList[idx-1] != "\\left":
+                strList.insert(idx, "\\left")
+            elif idx == 0:
+                strList.insert(idx, "\\left")
+        elif re.match("^(\)|\])$", elem) != None:
+            if strList[idx-1] != "\\right":
+                strList.insert(idx, "\\right")
         '''elif re.match('^.*\(.*$', elem) != None and re.match('^.*(LEFT|left)\(.*$', elem) == None and strList[idx-1] != "\\left":
             leftBracketLocation = elem.find("(")
             beforePart = elem[0:leftBracketLocation]
@@ -411,7 +481,7 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
             del strList[idx]
             strList.insert(idx, afterPart)
             strList.insert(idx, "\\leq")
-        elif re.match("^.+le$", elem) != None and elem != "angle":
+        elif re.match("^.+le$", elem) != None and elem != "angle" and elem != "triangle":
             inequalityLocation = elem.find("le")
             beforePart = elem[0:inequalityLocation]
             del strList[idx]
