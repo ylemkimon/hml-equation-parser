@@ -196,7 +196,7 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                         strList.insert(idx, "\\mathbf")
                     elif tf == "it" or tf == "IT":
                         strList.insert(idx, "\\mathit")
-    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cdot", "CDOT", "times", "TIMES", "triangle"]
+    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cup", "cdot", "CDOT", "times", "TIMES", "triangle", "sim", "over"]
     keywordMap = {
         "sin": "\\sin",
         "cos": "\\cos",
@@ -211,11 +211,14 @@ def fontRegularizer (strList: List[str]) -> List[str]:
         "sigma": "\\sigma",
         "angle": "\\angle",
         "cap": "\\cap",
+        "cup": "\\cup",
         "cdot": "\\cdot",
         "CDOT": "\\cdot",
         "times": "\\times",
         "TIMES": "\\times",
-        "triangle": "\\triangle"
+        "triangle": "\\triangle",
+        "sim": "\\sim",
+        "over": "over"
     }
     for sk in specialKeywords:
         idx = 0
@@ -477,10 +480,19 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, "\\leq")
             strList.insert(idx, beforePart)
         elif re.match("^le.+$", elem) != None:
-            afterPart = elem[2:]
-            del strList[idx]
-            strList.insert(idx, afterPart)
-            strList.insert(idx, "\\leq")
+            if re.match("^leq.+$", elem) != None:
+                afterPart = elem[3:]
+                del strList[idx]
+                strList.insert(idx, afterPart)
+                strList.insert(idx, "\\leq")
+            elif re.match("^leq$", elem) != None:
+                del strList[idx]
+                strList.insert(idx, "\\leq")
+            else:
+                afterPart = elem[2:]
+                del strList[idx]
+                strList.insert(idx, afterPart)
+                strList.insert(idx, "\\leq")
         elif re.match("^.+le$", elem) != None and elem != "angle" and elem != "triangle":
             inequalityLocation = elem.find("le")
             beforePart = elem[0:inequalityLocation]
@@ -499,10 +511,19 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, "\\geq")
             strList.insert(idx, beforePart)
         elif re.match("^ge.+$", elem) != None:
-            afterPart = elem[2:]
-            del strList[idx]
-            strList.insert(idx, afterPart)
-            strList.insert(idx, "\\geq")
+            if re.match("^geq.+$", elem) != None:
+                afterPart = elem[3:]
+                del strList[idx]
+                strList.insert(idx, afterPart)
+                strList.insert(idx, "\\geq")
+            elif re.match("^geq$", elem) != None:
+                del strList[idx]
+                strList.insert(idx, "\\geq")
+            else:
+                afterPart = elem[2:]
+                del strList[idx]
+                strList.insert(idx, afterPart)
+                strList.insert(idx, "\\geq")
         elif re.match("^.+ge$", elem) != None:
             inequalityLocation = elem.find("ge")
             beforePart = elem[0:inequalityLocation]
@@ -514,7 +535,7 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, "\\geq")
     return strList
 
-def expRegularizer (strList: List[str]) -> List[str]:
+def expRegularizer (strList: List[str], avoid: bool) -> List[str]:
     '''
     Regularize exponents and subscripts.
     
@@ -531,89 +552,99 @@ def expRegularizer (strList: List[str]) -> List[str]:
         Exponent and subscript regularized string list.
     '''
     regularizationTarget = ["^", "_"]
+    avoidRegularizationTarget = ["over", "sum", "int"]
+    if not avoid:
+        avoidRegularizationTarget = []
     for rt in regularizationTarget:
         idx = 0
         while idx < len(strList):
         #for idx, elem in enumerate(strList):
             elem = strList[idx]
-            if re.match("^.+" + "\\" + rt + ".+$", elem) != None and "{" not in elem and "}" not in elem:
-                exponentLocation = elem.find(rt)
-                beforePart = elem[0:exponentLocation]
-                afterPart = elem[exponentLocation+1:]
-                del strList[idx]
-                strList.insert(idx, "}")
-                strList.insert(idx, "}")
-                strList.insert(idx, afterPart)
-                strList.insert(idx, "{")
-                strList.insert(idx, rt)
-                strList.insert(idx, beforePart)
-                strList.insert(idx, "{")
-            elif re.match("^" + "\\" + rt + ".+$", elem) != None and "{" not in elem and "}" not in elem:
-                afterPart = elem[1:]
-                del strList[idx]
-                strList.insert(idx, "}")
-                strList.insert(idx, afterPart)
-                strList.insert(idx, "{")
-                strList.insert(idx, rt)
-            elif re.match("^.+" + "\\" + rt + "$", elem) != None and "{" not in elem and "}" not in elem:
-                exponentLocation = elem.find(rt)
-                beforePart = elem[0:exponentLocation]
-                del strList[idx]
-                strList.insert(idx, rt)
-                #strList.insert(idx, "}")
-                strList.insert(idx, beforePart)
-                #strList.insert(idx, "{")
-                if strList[idx+2] == "{":
-                    rightBracketLocation = idx+3
-                    rightBracketMatch = 1
-                    while rightBracketMatch > 0:
-                        if strList[rightBracketLocation] == "{":
-                            rightBracketMatch = rightBracketMatch + 1
-                        elif strList[rightBracketLocation] == "}":
-                            rightBracketMatch = rightBracketMatch - 1
-                        rightBracketLocation = rightBracketLocation + 1
-                    strList.insert(rightBracketLocation, "}")
+            checkAvoid = False
+            for art in avoidRegularizationTarget:
+                if art in elem:
+                    checkAvoid = True
+            if not checkAvoid:
+                if re.match("^.+" + "\\" + rt + ".+$", elem) != None and "{" not in elem and "}" not in elem:
+                    exponentLocation = elem.find(rt)
+                    beforePart = elem[0:exponentLocation]
+                    afterPart = elem[exponentLocation+1:]
+                    del strList[idx]
+                    strList.insert(idx, "}")
+                    strList.insert(idx, "}")
+                    strList.insert(idx, afterPart)
                     strList.insert(idx, "{")
-                else:
+                    strList.insert(idx, rt)
+                    strList.insert(idx, beforePart)
                     strList.insert(idx, "{")
-                    strList.insert(idx+4, "}")
-            '''elif re.match("^\\" + rt + "$", elem) != None:
-                #if strList[idx-1] != "}":
-                #    strList.insert(idx-1, "{")
-                #    strList.insert(idx, "}")
-                #if strList[idx+3] != "{":
-                #    strList.insert(idx+3, "{")
-                #    strList.insert(idx+5, "}")
-                if strList[idx+1] != "{":
-                    strList.insert(idx+1, "{")
-                    strList.insert(idx+3, "}")
-                outerBracketLocationRight = idx+2
-                outerBracketRightMatch = 1
-                while outerBracketRightMatch > 0:
-                    if strList[outerBracketLocationRight] == "{":
-                        outerBracketRightMatch = outerBracketRightMatch + 1
-                    elif strList[outerBracketLocationRight] == "}":
-                        outerBracketRightMatch = outerBracketRightMatch - 1
-                    outerBracketLocationRight = outerBracketLocationRight + 1
-                outerBracketLocationRight = outerBracketLocationRight - 1
-                if strList[idx-1] == "}":
-                    outerBracketLocationLeft = idx-2
-                    outerBracketLeftMatch = 1
-                    while outerBracketLeftMatch > 0:
-                        if strList[outerBracketLocationLeft] == "}":
-                            outerBracketLeftMatch = outerBracketLeftMatch + 1
-                        elif strList[outerBracketLocationLeft] == "{":
-                            outerBracketLeftMatch = outerBracketLeftMatch - 1
-                        outerBracketLocationLeft = outerBracketLocationLeft + 1
-                    outerBracketLocationLeft = outerBracketLocationLeft - 1
-                    strList.insert(outerBracketLocationLeft, "{")
-                    strList.insert(outerBracketLocationRight+1, "}")
-                    idx = idx + 1
-                else:
-                    strList.insert(idx-1, "{")
-                    strList.insert(outerBracketLocationRight+1, "}")
-                    idx = idx + 1'''
-            idx = idx + 1
+                elif re.match("^" + "\\" + rt + ".+$", elem) != None and "{" not in elem and "}" not in elem:
+                    afterPart = elem[1:]
+                    del strList[idx]
+                    strList.insert(idx, "}")
+                    strList.insert(idx, afterPart)
+                    strList.insert(idx, "{")
+                    strList.insert(idx, rt)
+                elif re.match("^.+" + "\\" + rt + "$", elem) != None and "{" not in elem and "}" not in elem:
+                    exponentLocation = elem.find(rt)
+                    beforePart = elem[0:exponentLocation]
+                    del strList[idx]
+                    strList.insert(idx, rt)
+                    #strList.insert(idx, "}")
+                    strList.insert(idx, beforePart)
+                    #strList.insert(idx, "{")
+                    if strList[idx+2] == "{":
+                        rightBracketLocation = idx+3
+                        rightBracketMatch = 1
+                        while rightBracketMatch > 0:
+                            if strList[rightBracketLocation] == "{":
+                                rightBracketMatch = rightBracketMatch + 1
+                            elif strList[rightBracketLocation] == "}":
+                                rightBracketMatch = rightBracketMatch - 1
+                            rightBracketLocation = rightBracketLocation + 1
+                        strList.insert(rightBracketLocation, "}")
+                        strList.insert(idx, "{")
+                    else:
+                        strList.insert(idx, "{")
+                        strList.insert(idx+4, "}")
+                '''elif re.match("^\\" + rt + "$", elem) != None:
+                    #if strList[idx-1] != "}":
+                    #    strList.insert(idx-1, "{")
+                    #    strList.insert(idx, "}")
+                    #if strList[idx+3] != "{":
+                    #    strList.insert(idx+3, "{")
+                    #    strList.insert(idx+5, "}")
+                    if strList[idx+1] != "{":
+                        strList.insert(idx+1, "{")
+                        strList.insert(idx+3, "}")
+                    outerBracketLocationRight = idx+2
+                    outerBracketRightMatch = 1
+                    while outerBracketRightMatch > 0:
+                        if strList[outerBracketLocationRight] == "{":
+                            outerBracketRightMatch = outerBracketRightMatch + 1
+                        elif strList[outerBracketLocationRight] == "}":
+                            outerBracketRightMatch = outerBracketRightMatch - 1
+                        outerBracketLocationRight = outerBracketLocationRight + 1
+                    outerBracketLocationRight = outerBracketLocationRight - 1
+                    if strList[idx-1] == "}":
+                        outerBracketLocationLeft = idx-2
+                        outerBracketLeftMatch = 1
+                        while outerBracketLeftMatch > 0:
+                            if strList[outerBracketLocationLeft] == "}":
+                                outerBracketLeftMatch = outerBracketLeftMatch + 1
+                            elif strList[outerBracketLocationLeft] == "{":
+                                outerBracketLeftMatch = outerBracketLeftMatch - 1
+                            outerBracketLocationLeft = outerBracketLocationLeft + 1
+                        outerBracketLocationLeft = outerBracketLocationLeft - 1
+                        strList.insert(outerBracketLocationLeft, "{")
+                        strList.insert(outerBracketLocationRight+1, "}")
+                        idx = idx + 1
+                    else:
+                        strList.insert(idx-1, "{")
+                        strList.insert(outerBracketLocationRight+1, "}")
+                        idx = idx + 1'''
+                idx = idx + 1
+            else:
+                idx = idx + 1
     return strList
 
 def sqrtRegularizer (strList: List[str]) -> List[str]:
@@ -955,7 +986,7 @@ def limRegularizer (strList: List[str]) -> List[str]:
             afterPart = elem[2:]
             del strList[idx]
             strList.insert(idx, afterPart)
-            strList.insert("\\rightarrow")
+            strList.insert(idx, "\\rightarrow")
         elif re.match("^->$", elem) != None:
             #print("Case when righrarrow is by itself. strList: " + str(strList))
             del strList[idx]
