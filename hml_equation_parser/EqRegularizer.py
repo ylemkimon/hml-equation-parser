@@ -649,19 +649,80 @@ def sqrtRegularizer (strList: List[str]) -> List[str]:
             beforePart = elem[0:sqrtLocation]
             sqrtPart = "\\sqrt"
             remainderPart = elem[sqrtLocation+4:]
+            '''if re.match("^.+of.+", remainderPart) != None:
+                ofLocation = remainderPart.find("of")
+                upperPart = remainderPart[0:ofLocation]
+                lowerPart = remainderPart[ofLocation+2:]
+                del strList[idx]
+                strList.insert(idx, "}")
+                strList.insert(idx, lowerPart)
+                strList.insert(idx, "{")
+                strList.insert(idx, "]")
+                strList.insert(idx, upperPart)
+                strList.insert(idx, "[")
+                strList.insert(idx, sqrtPart)
+                if beforePart != '':
+                    strList.insert(idx, beforePart)
+            elif re.match("^.+of$", remainderPart) != None:
+                ofLocation = remainderPart.find("of")
+                upperPart = remainderPart[0:ofLocation]
+                del strList[idx]
+                strList.insert(idx, "]")
+                strList.insert(idx, upperPart)
+                strList.insert(idx, "[")
+                strList.insert(idx, sqrtPart)
+                if beforePart != '':
+                    strList.insert(idx, beforePart)
+            else:
+                del strList[idx]
+                strList.insert(idx, "}")
+                strList.insert(idx, remainderPart)
+                strList.insert(idx, "{")
+                strList.insert(idx, sqrtPart)
+                if beforePart != '':
+                    strList.insert(idx, beforePart)'''
             del strList[idx]
-            strList.insert(idx, beforePart)
-            strList.insert(idx+1, "}")
-            strList.insert(idx+1, remainderPart)
-            strList.insert(idx+1, "{")
-            strList.insert(idx+1, sqrtPart)
+            strList.insert(idx, "}")
+            strList.insert(idx, remainderPart)
+            strList.insert(idx, "{")
+            strList.insert(idx, sqrtPart)
+            if beforePart != '':
+                strList.insert(idx, beforePart)
         elif re.match("^.*root$", elem) != None:
             sqrtLocation = elem.find("root")
             beforePart = elem[0:sqrtLocation]
             sqrtPart = "\\sqrt"
-            del strList[idx]
-            strList.insert(idx, sqrtPart)
-            strList.insert(idx, beforePart)
+            if strList[idx+1] != '{':
+                del strList[idx]
+                strList.insert(idx, sqrtPart)
+                strList.insert(idx, beforePart)
+                afterPart = strList[idx+2]
+                del strList[idx+2]
+                strList.insert(idx+2, "}")
+                strList.insert(idx+2, afterPart)
+                strList.insert(idx+2, "{")
+            else:
+                del strList[idx]
+                strList.insert(idx, sqrtPart)
+                strList.insert(idx, beforePart)
+    for idx, elem in enumerate(strList):
+        if elem == "\\sqrt":
+            print(strList)
+            rightBracketLocation = idx + 2
+            rightBracketMatch = 1
+            while rightBracketMatch > 0 and rightBracketLocation < len(strList):
+                if strList[rightBracketLocation] == '{':
+                    rightBracketMatch = rightBracketMatch + 1
+                elif strList[rightBracketLocation] == '}':
+                    rightBracketMatch = rightBracketMatch - 1
+                rightBracketLocation = rightBracketLocation + 1
+            rightBracketLocation = rightBracketLocation - 1
+            if rightBracketLocation < len(strList) - 1 and strList[rightBracketLocation+1] == "of":
+                del strList[idx+1]
+                strList.insert(idx+1, '[')
+                del strList[rightBracketLocation]
+                strList.insert(rightBracketLocation, ']')
+                del strList[rightBracketLocation+1]
     return strList
 
 def barRegularizer (strList: List[str]) -> List[str]:
