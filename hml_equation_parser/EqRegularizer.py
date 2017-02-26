@@ -196,7 +196,7 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                         strList.insert(idx, "\\mathbf")
                     elif tf == "it" or tf == "IT":
                         strList.insert(idx, "\\mathit")
-    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cup", "cdot", "CDOT", "times", "TIMES", "triangle", "sim", "over"]
+    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cup", "cdot", "CDOT", "times", "TIMES", "triangle", "sim", "over", "OVER"]
     keywordMap = {
         "sin": "\\sin",
         "cos": "\\cos",
@@ -218,7 +218,8 @@ def fontRegularizer (strList: List[str]) -> List[str]:
         "TIMES": "\\times",
         "triangle": "\\triangle",
         "sim": "\\sim",
-        "over": "over"
+        "over": "over",
+        "OVER": "over"
     }
     for sk in specialKeywords:
         idx = 0
@@ -779,23 +780,29 @@ def barRegularizer (strList: List[str]) -> List[str]:
         idx = 0
         while idx < len(strList):
             elem = strList[idx]
-            #print("In barRegularizer, idx: " + str(idx) + ", elem: " + elem)
+            #print("In barRegularizer, idx: " + str(idx) + ", elem: " + elem, "target: " + targetKeyword)
             if re.match("^" + targetKeyword + "$", elem) != None:
+                #print(strList)
                 if strList[idx+1] != '{':
                     innerContent = strList[idx+1]
                     strList.insert(idx+1, '{')
                     strList.insert(idx+3, '}')
+                #print(strList)
                 if strList[idx-1] != '{':
                     #leftBraceLocation = idx+1
                     rightBraceLocation = idx+2
-                    while True:
-                        if strList[rightBraceLocation] != '}':
-                            rightBraceLocation = rightBraceLocation + 1
-                        else:
-                            break
+                    rightBraceMatch = 1
+                    while rightBraceMatch > 0:
+                        if strList[rightBraceLocation] == '}':
+                            rightBraceMatch = rightBraceMatch - 1
+                        elif strList[rightBraceLocation] == '{':
+                            rightBraceMatch = rightBraceMatch + 1
+                        rightBraceLocation = rightBraceLocation + 1
+                    rightBraceLocation = rightBraceLocation - 1
                     strList.insert(rightBraceLocation + 1, '}')
-                    strList.insert(idx-1, '{')
+                    strList.insert(idx, '{')
                     idx = idx + 1
+                #print(strList)
             elif re.match("^" + targetKeyword + ".+$", elem) != None:
                 afterPart = elem[len(targetKeyword):]
                 del strList[idx]
@@ -826,7 +833,7 @@ def fracRegularizer (strList: List[str]) -> List[str]:
         Fractions regualrized string list.
     '''
     for idx, elem in enumerate(strList):
-        if re.match("^.+over.+$", elem) != None:
+        if re.match("^.+(over|OVER).+$", elem) != None:
             '''
             Case when divider and numerator are all sticked together to keyword.
             '''
@@ -842,7 +849,7 @@ def fracRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, "}")
             strList.insert(idx+1, beforePart)
             strList.insert(idx+1, "{")
-        elif re.match("^over.+$", elem) != None:
+        elif re.match("^(over|OVER).+$", elem) != None:
             '''
             Case when numerator is seperated from keyword.
             '''
@@ -880,7 +887,7 @@ def fracRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, "}")
                 strList.insert(idx, beforePart)
                 strList.insert(idx, "{")
-        elif re.match("^over$", elem) != None:
+        elif re.match("^(over|OVER)$", elem) != None:
             '''
             Case when numerator and divider are both seperated from keyword.
             '''

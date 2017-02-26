@@ -61,6 +61,7 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
 
     strList = sqrtRegularizer(strList)
     strList = expRegularizer(strList, True)
+    print("After exponent regularizer(true): " + str(strList))
     strList = barRegularizer(strList)
     print("Before fraction regularizer: " + str(strList))
     strList = fracRegularizer(strList)
@@ -68,6 +69,7 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
     strList = limRegularizer(strList)
     strList = sumRegularizer(strList)
     strList = expRegularizer(strList, False)
+    print("After exponent regularizer(false): " + str(strList))
     strList = fontRegularizer(strList)
     strList = matchBraces(strList)
     
