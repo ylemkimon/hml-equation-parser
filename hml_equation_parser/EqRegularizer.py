@@ -196,7 +196,7 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                         strList.insert(idx, "\\mathbf")
                     elif tf == "it" or tf == "IT":
                         strList.insert(idx, "\\mathit")
-    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cup", "cdot", "CDOT", "times", "TIMES", "triangle", "sim", "over", "OVER"]
+    specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cup", "cdot", "CDOT", "cdots", "CDOTS", "times", "TIMES", "triangle", "sim", "box"]
     keywordMap = {
         "sin": "\\sin",
         "cos": "\\cos",
@@ -214,12 +214,15 @@ def fontRegularizer (strList: List[str]) -> List[str]:
         "cup": "\\cup",
         "cdot": "\\cdot",
         "CDOT": "\\cdot",
+        "cdots": "\\cdots",
+        "CDOTS": "\\cdots",
         "times": "\\times",
         "TIMES": "\\times",
         "triangle": "\\triangle",
         "sim": "\\sim",
         "over": "over",
-        "OVER": "over"
+        "OVER": "over",
+        "box": "BOX"
     }
     for sk in specialKeywords:
         idx = 0
@@ -314,7 +317,7 @@ def backslashRemover (strList: List[str]) -> List[str]:
         Redundant backslash removed string list.
     '''
     for idx, elem in enumerate(strList):
-        if re.match("^\\\\[A-Z]{1,4}$", elem) != None:
+        if re.match("^\\\\[A-Z]{1,5}$", elem) != None:
             remainderPart = elem[1:]
             del strList[idx]
             strList.insert(idx, remainderPart)
@@ -336,13 +339,13 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
         Bracket regularized list of strings.
     '''
     for idx, elem in enumerate(strList):
-        if re.match('^(left|LEFT)(\(|\{|\[)$', elem) != None:
+        if re.match('^(left|LEFT)(\(|\{|\[|\|)$', elem) != None:
             directionKeyword = "\\left"
             bracketKeyword = elem[4:]
             del strList[idx]
             strList.insert(idx, bracketKeyword)
             strList.insert(idx, directionKeyword)
-        elif re.match('^(left|LEFT)(\(|\{|\[).+$', elem) != None:
+        elif re.match('^(left|LEFT)(\(|\{|\[|\|).+$', elem) != None:
             directionKeyword = "\\left"
             bracketKeyword = elem[4]
             afterPart = elem[5:]
@@ -351,7 +354,7 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, bracketKeyword)
             strList.insert(idx, directionKeyword)
         elif re.match('^.*(left|LEFT)$', elem) != None and elem != "\\left":
-            if strList[idx+1] == '(' or strList[idx+1] == '{' or strList[idx+1] == '[':
+            if strList[idx+1] == '(' or strList[idx+1] == '{' or strList[idx+1] == '[' or strList[idx+1] == '|':
                 directionKeyword = "\\left"
                 directionKeywordLocation = elem.find("left")
                 if directionKeywordLocation == -1:
@@ -361,13 +364,13 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, directionKeyword)
                 if beforePart != "":
                     strList.insert(idx, beforePart)
-        elif re.match('^(right|RIGHT)(\)|\}|\])$', elem) != None:
+        elif re.match('^(right|RIGHT)(\)|\}|\]|\|)$', elem) != None:
             directionKeyword = "\\right"
             bracketKeyword = elem[5:]
             del strList[idx]
             strList.insert(idx, bracketKeyword)
             strList.insert(idx, directionKeyword)
-        elif re.match('^(right|RIGHT)(\)|\}|\]).+$', elem) != None:
+        elif re.match('^(right|RIGHT)(\)|\}|\]|\|).+$', elem) != None:
             directionKeyword = "\\right"
             bracketKeyword = elem[5]
             afterPart = elem[6:]
@@ -376,7 +379,7 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx, bracketKeyword)
             strList.insert(idx, directionKeyword)
         elif re.match('^.*(right|RIGHT)$', elem) != None and elem != "\\right":
-            if strList[idx+1] == ')' or strList[idx+1] == '}' or strList[idx+1] == ']':
+            if strList[idx+1] == ')' or strList[idx+1] == '}' or strList[idx+1] == ']' or strList[idx+1] == '|':
                 directionKeyword = "\\right"
                 directionKeywordLocation = elem.find("right")
                 if directionKeywordLocation == -1:
@@ -775,7 +778,7 @@ def barRegularizer (strList: List[str]) -> List[str]:
     out : List[str]
         Bar-like element regualrized string list.
     '''
-    targetKeywords = ["vec", "dyad", "acute", "grave", "dot", "ddot", "bar", "hat", "check", "arch", "tilde", "BOX"]
+    targetKeywords = ["vec", "dyad", "acute", "grave", "dot", "ddot", "bar", "hat", "check", "arch", "tilde", "BOX", "overline"]
     for targetKeyword in targetKeywords:
         idx = 0
         while idx < len(strList):
@@ -787,6 +790,8 @@ def barRegularizer (strList: List[str]) -> List[str]:
                     innerContent = strList[idx+1]
                     strList.insert(idx+1, '{')
                     strList.insert(idx+3, '}')
+                    strList.insert(idx+4, '}')
+                    strList.insert(idx-1, '{')
                 #print(strList)
                 if strList[idx-1] != '{':
                     #leftBraceLocation = idx+1
@@ -849,7 +854,7 @@ def fracRegularizer (strList: List[str]) -> List[str]:
             strList.insert(idx+1, "}")
             strList.insert(idx+1, beforePart)
             strList.insert(idx+1, "{")
-        elif re.match("^(over|OVER).+$", elem) != None:
+        elif re.match("^(over|OVER).+$", elem) != None and elem != "overline":
             '''
             Case when numerator is seperated from keyword.
             '''

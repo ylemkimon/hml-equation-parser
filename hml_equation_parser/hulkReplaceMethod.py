@@ -74,27 +74,27 @@ def replaceAllBar(eqString: str) -> str:
     '''
     def replaceBar(eqString: str, barStr: str, barElem: str) -> str:
         cursor = 0
-        #print("eqString: " + eqString + ", barStr: " + barStr + ", barElem: " + barElem)
+        print("eqString: " + eqString + ", barStr: " + barStr + ", barElem: " + barElem)
         while True:
             cursor = eqString.find(barStr)
-            #print("cursor: " + str(cursor))
+            print("cursor: " + str(cursor))
             if cursor == -1:
                 break
             try:
                 eStart, eEnd = _findBrackets(eqString, cursor, direction=1)
-                #print("eStart: " + str(eStart) + ", eEnd: " + str(eEnd))
+                print("eStart: " + str(eStart) + ", eEnd: " + str(eEnd))
                 bStart, bEnd = _findOutterBrackets(eqString, cursor)
-                #print("bStart: " + str(bStart) + ", bEnd: " + str(bEnd))
+                print("bStart: " + str(bStart) + ", bEnd: " + str(bEnd))
                 elem = eqString[eStart:eEnd]
                 
                 beforeBar = eqString[0:bStart+1]
                 afterBar = eqString[bEnd-1:]
 
-                if cursor == 0:
+                if cursor == 0 or bStart > eStart:
                     beforeBar = ''
                     afterBar = eqString[eEnd:]
 
-                #print("elem: " + elem + ", beforeBar: " + beforeBar + ", afterBar: " + afterBar)
+                print("elem: " + elem + ", beforeBar: " + beforeBar + ", afterBar: " + afterBar)
                 eqString = beforeBar + barElem + elem + afterBar
             except ValueError:
                 return eqString

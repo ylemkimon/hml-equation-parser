@@ -223,6 +223,7 @@
     "cdot": "HULKCDOT",
     "ddot": "HULKDDOT",
     "bar": "HULKBAR",
+    "overline": "HULKBAR",
     "hat": "HULKHAT",
     "check": "HULKCHECK",
     "arch": "HULKARCH",
