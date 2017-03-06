@@ -3,6 +3,8 @@ import json, codecs
 import os
 import re
 
+listLengthLimit = 1000
+
 def insertList (index: int, origin: List[str], lst: List[str]) -> List[str]:
     beforePart = origin[0:index]
     afterPart = origin[index:]
@@ -143,6 +145,10 @@ def textRegularizer (strList: List[str]) -> List[str]:
                 tempList.insert(0, asciiPart)
             for ts in tempList:
                 strList.insert(idx, ts)
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     return strList
 
 def fontRegularizer (strList: List[str]) -> List[str]:
@@ -196,6 +202,10 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                         strList.insert(idx, "\\mathbf")
                     elif tf == "it" or tf == "IT":
                         strList.insert(idx, "\\mathit")
+            if len(strList) > listLengthLimit:
+                print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                strList = ["ERROR"]
+                break
     specialKeywords = ["sin", "cos", "tan", "ln", "log", "alpha", "beta", "gamma", "theta", "pi", "sigma", "angle", "cap", "cup", "cdot", "CDOT", "cdots", "CDOTS", "times", "TIMES", "triangle", "sim", "box"]
     keywordMap = {
         "sin": "\\sin",
@@ -255,6 +265,10 @@ def fontRegularizer (strList: List[str]) -> List[str]:
             elif re.match("^"+sk+"$", elem) != None:
                 del strList[idx]
                 strList.insert(idx, keywordMap[sk])
+            if len(strList) > listLengthLimit:
+                print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                strList = ["ERROR"]
+                break
             idx = idx + 1
     matrixKeywords = ["matrix", "cases"]
     for mk in matrixKeywords:
@@ -299,6 +313,10 @@ def fontRegularizer (strList: List[str]) -> List[str]:
                             rightBracketLocation = rightBracketLocation + 1
                     strList.insert(rightBracketLocation+1, "}")
                     strList.insert(idx, "{")
+            if len(strList) > listLengthLimit:
+                print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                strList = ["ERROR"]
+                break
     return strList
 
 def backslashRemover (strList: List[str]) -> List[str]:
@@ -397,6 +415,10 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
         elif re.match("^(\)|\])$", elem) != None:
             if strList[idx-1] != "\\right":
                 strList.insert(idx, "\\right")
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
         '''elif re.match('^.*\(.*$', elem) != None and re.match('^.*(LEFT|left)\(.*$', elem) == None and strList[idx-1] != "\\left":
             leftBracketLocation = elem.find("(")
             beforePart = elem[0:leftBracketLocation]
@@ -449,6 +471,10 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, beforePart)
             #del strList[idx]
             #strList.insert("")
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     return strList
 
 def inEqualityRegularizer (strList: List[str]) -> List[str]:
@@ -537,6 +563,10 @@ def inEqualityRegularizer (strList: List[str]) -> List[str]:
         elif elem == "ge":
             del strList[idx]
             strList.insert(idx, "\\geq")
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     return strList
 
 def expRegularizer (strList: List[str], avoid: bool) -> List[str]:
@@ -646,8 +676,16 @@ def expRegularizer (strList: List[str], avoid: bool) -> List[str]:
                         strList.insert(idx-1, "{")
                         strList.insert(outerBracketLocationRight+1, "}")
                         idx = idx + 1'''
+                if len(strList) > listLengthLimit:
+                    print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                    strList = ["ERROR"]
+                    break
                 idx = idx + 1
             else:
+                if len(strList) > listLengthLimit:
+                    print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                    strList = ["ERROR"]
+                    break
                 idx = idx + 1
     return strList
 
@@ -740,6 +778,10 @@ def sqrtRegularizer (strList: List[str]) -> List[str]:
                 del strList[idx]
                 strList.insert(idx, sqrtPart)
                 strList.insert(idx, beforePart)
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     for idx, elem in enumerate(strList):
         if elem == "\\sqrt":
             print(strList)
@@ -758,6 +800,10 @@ def sqrtRegularizer (strList: List[str]) -> List[str]:
                 del strList[rightBracketLocation]
                 strList.insert(rightBracketLocation, ']')
                 del strList[rightBracketLocation+1]
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     return strList
 
 def barRegularizer (strList: List[str]) -> List[str]:
@@ -818,6 +864,10 @@ def barRegularizer (strList: List[str]) -> List[str]:
                 if strList[idx-1] != "{":
                     strList.insert(idx+4, "}")
                     strList.insert(idx, "{")
+            if len(strList) > listLengthLimit:
+                print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                strList = ["ERROR"]
+                break
             idx = idx + 1
     return strList
 
@@ -919,6 +969,10 @@ def fracRegularizer (strList: List[str]) -> List[str]:
                 if strList[idx+1] != "{":
                     strList.insert(idx+1, "{")
                     strList.insert(idx+3, "}")
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     return strList
 
 def limRegularizer (strList: List[str]) -> List[str]:
@@ -976,6 +1030,10 @@ def limRegularizer (strList: List[str]) -> List[str]:
             del strList[idx]
             strList.insert(idx, "_")
             strList.insert(idx, "\\lim")
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     for idx, elem in enumerate(strList):
         if re.match("^.+->.+$", elem) != None:
             #print("Case when rightarrow is sticked together with before and after parts. strList: " + str(strList))
@@ -1003,6 +1061,10 @@ def limRegularizer (strList: List[str]) -> List[str]:
             #print("Case when righrarrow is by itself. strList: " + str(strList))
             del strList[idx]
             strList.insert(idx, "\\rightarrow")
+        if len(strList) > listLengthLimit:
+            print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+            strList = ["ERROR"]
+            break
     return strList
 
 def sumRegularizer (strList: List[str]) -> List[str]:
@@ -1222,6 +1284,14 @@ def sumRegularizer (strList: List[str]) -> List[str]:
                         idx = idx + 1
                 else:
                     idx = idx + 1
+                if len(strList) > listLengthLimit:
+                    print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                    strList = ["ERROR"]
+                    break
             else:
+                if len(strList) > listLengthLimit:
+                    print("Equation parser error. List exceeded length limit of " + str(listLengthLimit) + ".")
+                    strList = ["ERROR"]
+                    break
                 idx = idx + 1
     return strList
