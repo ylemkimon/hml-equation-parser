@@ -443,7 +443,6 @@ def bracketRegularizer (strList: List[str]) -> List[str]:
                 strList.insert(idx, beforePart)'''
     for idx, elem in enumerate(strList):
         if re.match('^.*(\(|\{|\[).+(\)|\}|\]).*$', elem) != None and re.match('^.*(right|RIGHT)(\)|\}|\]).*', elem) == None:
-            print(elem)
             leftBracketLocation = elem.find("(")
             if leftBracketLocation == -1:
                 leftBracketLocation = elem.find("{")
@@ -784,7 +783,6 @@ def sqrtRegularizer (strList: List[str]) -> List[str]:
             break
     for idx, elem in enumerate(strList):
         if elem == "\\sqrt":
-            print(strList)
             rightBracketLocation = idx + 2
             rightBracketMatch = 1
             while rightBracketMatch > 0 and rightBracketLocation < len(strList):

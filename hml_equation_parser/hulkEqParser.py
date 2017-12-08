@@ -49,27 +49,20 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
 
     strList = list(filter(lambda x: x != "", strList))
 
-    print("Before bracket regularizer: " + str(strList))
     strList = bracketRegularizer(strList)
-    print("After bracket regularizer: " + str(strList))
     #strList = fontRegularizer(strList)
     
     strList = matchCurlyBraces(strList)
     strList = inEqualityRegularizer(strList)
     strList = textRegularizer(strList)
-    print("After text regularizer: " + str(strList))
 
     strList = sqrtRegularizer(strList)
     strList = expRegularizer(strList, True)
-    print("After exponent regularizer(true): " + str(strList))
     strList = barRegularizer(strList)
-    print("Before fraction regularizer: " + str(strList))
     strList = fracRegularizer(strList)
-    print("After fraction regularizer: " + str(strList))
     strList = limRegularizer(strList)
     strList = sumRegularizer(strList)
     strList = expRegularizer(strList, False)
-    print("After exponent regularizer(false): " + str(strList))
     strList = fontRegularizer(strList)
     strList = matchBraces(strList)
     
@@ -85,7 +78,6 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
 
     strConverted = ' '.join(strList)
 
-    print("strConverted: " + strConverted)
     
     #strConverted = replaceFrac(strConverted)
     strConverted = replaceRootOf(strConverted)
