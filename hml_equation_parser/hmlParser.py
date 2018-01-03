@@ -22,8 +22,9 @@ def parseHml(fileName: str) -> ElementTree:
     out : ElementTree
         An parsed ElementTree object.
     '''
-    xmlText = open(fileName, 'r').read()
-    
+    with codecs.open(fileName, 'r', 'utf8') as f:
+        xmlText = f.read()
+
     hwpml = fromstring(xmlText)
     body = hwpml.find("BODY")
     section = body.find("SECTION")
