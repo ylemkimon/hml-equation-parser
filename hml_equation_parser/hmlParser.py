@@ -37,11 +37,6 @@ def parseHml(fileName: str) -> ElementTree:
 
         paragraphNode = Element(config["NodeNames"]["paragraph"])
 
-        if paragraph.get("PageBreak") == "true":
-            paragraphNode.attrib[config["NodeAttributes"]["newPage"]] = "true"
-        else:
-            paragraphNode.attrib[config["NodeAttributes"]["newPage"]] = "false"
-
         text = paragraph.find("TEXT")
         if text is not None:
             for child in text.getchildren():
@@ -90,9 +85,6 @@ def extract2HtmlStr(doc: ElementTree) -> str:
 
     for paragraph in doc.findall(config["NodeNames"]["paragraph"]):
         paragraphStringList = []
-
-        if paragraph.get(config["NodeAttributes"]["newPage"]) == "true":
-            paragraphStringList.append("<br>======================<br>")
 
         for child in paragraph.getchildren():
             if child.tag == config["NodeNames"]["char"]:
