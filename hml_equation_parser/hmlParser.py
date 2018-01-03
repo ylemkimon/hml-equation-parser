@@ -1,3 +1,4 @@
+from typing import Tuple, Union
 import os
 from xml.etree.ElementTree import fromstring, Element, ElementTree
 from .hulkEqParser import hmlEquation2latex
@@ -9,9 +10,9 @@ with codecs.open(os.path.join(os.path.dirname(__file__), "config.json"),
     config = json.load(f)
 
 
-def parseHml(fileName: str) -> ElementTree:
+def parseHml(fileName: str) -> Tuple[ElementTree, ElementTree]:
     '''
-    This is the sample code for parse .hml document and make ElementTree.
+    Parse .hml document and make ElementTrees for question and solution.
 
     Parameters
     ----------------------
@@ -19,8 +20,9 @@ def parseHml(fileName: str) -> ElementTree:
         fileName to be parsed.
     Returns
     ----------------------
-    out : ElementTree
-        An parsed ElementTree object.
+    out : (ElementTree, ElementTree)
+        Tuple of parsed ElementTree objects for question and solution,
+        respectively.
     '''
     with codecs.open(fileName, 'r', 'utf8') as f:
         xmlText = f.read()
@@ -30,11 +32,12 @@ def parseHml(fileName: str) -> ElementTree:
     section = body.find("SECTION")
 
     docRoot = Element(config["NodeNames"]["root"])
+    solRoot = Element(config["NodeNames"]["root"])
 
-    paragraphs = section.findall("P")
-
-    for paragraph in paragraphs:
-
+    def parseParagraphNode(root: Element, paragraph: Element) -> None:
+        '''
+        Parse and make ElementTree of paragraph(P) node.
+        '''
         paragraphNode = Element(config["NodeNames"]["paragraph"])
 
         text = paragraph.find("TEXT")
@@ -56,12 +59,22 @@ def parseHml(fileName: str) -> ElementTree:
                     leafNode.text = value
                     paragraphNode.append(leafNode)
 
+                elif child.tag == "ENDNOTE":  # 해설 미주
+                    paralist = child.find("PARALIST")
+                    paragraphs = paralist.findall("P")
+
+                    for paragraph in paragraphs:
+                        parseParagraphNode(solRoot, paragraph)
+
                 else:
                     print("not supported tag: {}".format(child.tag))
 
-            docRoot.append(paragraphNode)
+            root.append(paragraphNode)
 
-    return ElementTree(docRoot)
+    for paragraph in section.findall("P"):
+        parseParagraphNode(docRoot, paragraph)
+
+    return ElementTree(docRoot), ElementTree(solRoot)
 
 
 def convertEquation(doc: ElementTree) -> str:
