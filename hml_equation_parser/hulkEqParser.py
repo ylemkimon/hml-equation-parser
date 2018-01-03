@@ -1,11 +1,14 @@
 from typing import List
-import json, codecs, os
-from .hulkReplaceMethod import replaceAllMatrix, replaceAllBar, replaceRootOf, replaceFrac, replaceAllBrace
+import json
+import codecs
+import os
+from .hulkReplaceMethod import (replaceAllMatrix, replaceAllBar, replaceRootOf,
+                                replaceFrac, replaceAllBrace)
 
-with codecs.open(os.path.join(os.path.dirname(__file__),
-                              "convertMap.json"),
+with codecs.open(os.path.join(os.path.dirname(__file__), "convertMap.json"),
                  "r", "utf8") as f:
     convertMap = json.load(f)
+
 
 def hmlEquation2latex(hmlEqStr: str) -> str:
     '''
@@ -15,7 +18,7 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
     ----------------------
     hmlEqStr : str
         A hml equation string to be converted.
-    
+
     Returns
     ----------------------
     out : str
@@ -35,13 +38,13 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
                     strList[i] = r'\}'
         return strList
 
-    strConverted = hmlEqStr.replace('`',' ')
+    strConverted = hmlEqStr.replace('`', ' ')
     strConverted = strConverted.replace('{', ' { ')
     strConverted = strConverted.replace('}', ' } ')
     strConverted = strConverted.replace('&', ' & ')
-    
+
     strList = strConverted.split(' ')
-    
+
     for key, candidate in enumerate(strList):
         if candidate in convertMap["convertMap"]:
             strList[key] = convertMap["convertMap"][candidate]
@@ -52,11 +55,11 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
     strList = replaceBracket(strList)
 
     strConverted = ' '.join(strList)
-    
+
     strConverted = replaceFrac(strConverted)
     strConverted = replaceRootOf(strConverted)
     strConverted = replaceAllMatrix(strConverted)
     strConverted = replaceAllBar(strConverted)
     strConverted = replaceAllBrace(strConverted)
-    
+
     return strConverted

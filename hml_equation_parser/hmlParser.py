@@ -1,18 +1,18 @@
 import os
 from xml.etree.ElementTree import fromstring, Element, ElementTree
 from .hulkEqParser import hmlEquation2latex
-import json, codecs
+import json
+import codecs
 
-
-with codecs.open(os.path.join(os.path.dirname(__file__),
-                              "config.json"),
+with codecs.open(os.path.join(os.path.dirname(__file__), "config.json"),
                  "r", "utf8") as f:
     config = json.load(f)
+
 
 def parseHml(fileName: str) -> ElementTree:
     '''
     This is the sample code for parse .hml document and make ElementTree.
-    
+
     Parameters
     ----------------------
     fileName : str
@@ -42,16 +42,13 @@ def parseHml(fileName: str) -> ElementTree:
         else:
             paragraphNode.attrib[config["NodeAttributes"]["newPage"]] = "false"
 
-        # I suupposed that there is one text tag or no text tag in one paragraph.
-        # If there are more than one text, you must use `findall` method to find all text tags.
-        
         text = paragraph.find("TEXT")
         if text is not None:
             for child in text.getchildren():
                 if child.tag == "CHAR":
                     value = child.text
 
-                    if value is not None:  # For EQUATION tag, there is a </CHAR> tag and it has no information.
+                    if value is not None:
                         leafNode = Element(config["NodeNames"]["char"])
                         leafNode.text = value
                         paragraphNode.append(leafNode)
@@ -59,11 +56,11 @@ def parseHml(fileName: str) -> ElementTree:
                 elif child.tag == "EQUATION":
                     script = child.find("SCRIPT")
                     value = script.text
-                    
+
                     leafNode = Element(config["NodeNames"]["equation"])
                     leafNode.text = value
                     paragraphNode.append(leafNode)
-                    
+
                 else:
                     print("not supported tag: {}".format(child.tag))
 
@@ -90,10 +87,10 @@ def extract2HtmlStr(doc: ElementTree) -> str:
     def convertSpace2nbsp(string: str) -> str:
         return string.replace(' ', r'&nbsp;')
     htmlStringList = []
-    
+
     for paragraph in doc.findall(config["NodeNames"]["paragraph"]):
         paragraphStringList = []
-        
+
         if paragraph.get(config["NodeAttributes"]["newPage"]) == "true":
             paragraphStringList.append("<br>======================<br>")
 
@@ -104,16 +101,17 @@ def extract2HtmlStr(doc: ElementTree) -> str:
                 paragraphStringList.append("$" + child.text + "$")
         paragraphString = ''.join(paragraphStringList)
         htmlStringList.append(paragraphString)
-    return config["htmlHeader"] + '<br>\n'.join(htmlStringList) + config["htmlFooter"]
+    return config["htmlHeader"] + '<br>\n'.join(htmlStringList) +\
+        config["htmlFooter"]
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     import sys
     script, hmlDoc, dst = sys.argv
 
     doc = parseHml(hmlDoc)
     doc = convertEquation(doc)
     doc.write(dst + '.xml')
-    
+
     with codecs.open(dst + ".html", "w", "utf8") as f:
         f.write(extract2HtmlStr(doc))

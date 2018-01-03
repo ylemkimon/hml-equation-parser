@@ -1,16 +1,16 @@
 from typing import Dict, Tuple
-import json, codecs
+import json
+import codecs
 import os
 
-
-with codecs.open(os.path.join(os.path.dirname(__file__),
-                              "convertMap.json"),
+with codecs.open(os.path.join(os.path.dirname(__file__), "convertMap.json"),
                  "r", "utf8") as f:
     convertMap = json.load(f)
 
 barDict = convertMap["BarConvertMap"]
 matDict = convertMap["MatrixConvertMap"]
 braceDict = convertMap["BraceConvertMap"]
+
 
 def _findOutterBrackets(eqString: str, startIdx: int) -> Tuple[int, int]:
     '''
@@ -27,7 +27,9 @@ def _findOutterBrackets(eqString: str, startIdx: int) -> Tuple[int, int]:
 
     return _findBrackets(eqString, idx, direction=1)
 
-def _findBrackets(eqString: str, startIdx: int, direction: int) -> Tuple[int, int]:
+
+def _findBrackets(eqString: str, startIdx: int,
+                  direction: int) -> Tuple[int, int]:
     '''
     eqString : equation string for converting.
     startIdx : the cursor of equation string to find brackets.
@@ -59,12 +61,9 @@ def _findBrackets(eqString: str, startIdx: int, direction: int) -> Tuple[int, in
 
         # find brackets with new cursor
         newStartIdx = len(eqString) - (startIdx+1)
-        startCur, endCur = _findBrackets(eqString, 
-                                         newStartIdx,
-                                         direction=1)
-        return (len(eqString)- endCur,
-                len(eqString)- startCur)
-        
+        startCur, endCur = _findBrackets(eqString, newStartIdx, direction=1)
+        return (len(eqString) - endCur, len(eqString) - startCur)
+
     raise ValueError("cannot find bracket")
 
 
@@ -83,7 +82,7 @@ def replaceAllBar(eqString: str) -> str:
                 eStart, eEnd = _findBrackets(eqString, cursor, direction=1)
                 bStart, bEnd = _findOutterBrackets(eqString, cursor)
                 elem = eqString[eStart:eEnd]
-                
+
                 beforeBar = eqString[0:bStart]
                 afterBar = eqString[bEnd:]
 
@@ -105,14 +104,15 @@ def replaceAllMatrix(eqString: str) -> str:
         '''
         replace the elements of matrix
         '''
-        bracketStr = bracketStr[1:-1]  ## remove brackets
-        
-        bracketStr = bracketStr.replace(r'#',r' \\ ')
-        bracketStr = bracketStr.replace(r'&amp;',r'&')
+        bracketStr = bracketStr[1:-1]  # remove brackets
+
+        bracketStr = bracketStr.replace(r'#', r' \\ ')
+        bracketStr = bracketStr.replace(r'&amp;', r'&')
 
         return bracketStr
 
-    def replaceMatrix(eqString: str, matStr: str, matElem: Dict[str, object]) -> str:
+    def replaceMatrix(eqString: str, matStr: str,
+                      matElem: Dict[str, object]) -> str:
         cursor = 0
         while True:
             cursor = eqString.find(matStr)
@@ -122,7 +122,7 @@ def replaceAllMatrix(eqString: str) -> str:
                 eStart, eEnd = _findBrackets(eqString, cursor, direction=1)
                 elem = replaceElementsOfMatrix(eqString[eStart:eEnd])
 
-                if matElem['removeOutterBrackets'] == True:
+                if matElem['removeOutterBrackets']:
                     bStart, bEnd = _findOutterBrackets(eqString, cursor)
                     beforeMat = eqString[0:bStart]
                     afterMat = eqString[bEnd:]
@@ -131,11 +131,11 @@ def replaceAllMatrix(eqString: str) -> str:
                     afterMat = eqString[eEnd:]
 
                 eqString = beforeMat + matElem['begin'] + \
-                           elem + matElem['end'] + afterMat
+                    elem + matElem['end'] + afterMat
             except ValueError:
                 return eqString
         return eqString
-    
+
     for matKey, matElem in matDict.items():
         eqString = replaceMatrix(eqString, matKey, matElem)
     return eqString
@@ -154,18 +154,15 @@ def replaceRootOf(eqString: str) -> str:
             break
         try:
             ofCursor = eqString.find(ofStr)
-            
+
             elem1 = _findBrackets(eqString, rootCursor, direction=1)
             elem2 = _findBrackets(eqString, ofCursor, direction=1)
 
             e1 = eqString[elem1[0]+1:elem1[1]-1]
             e2 = eqString[elem2[0]+1:elem2[1]-1]
 
-            eqString = eqString[0:rootCursor] + \
-                           r"\sqrt" + \
-                           r"[" + e1 + r"]" +\
-                           r"{" + e2 + r"}" +\
-                           eqString[elem2[1]+1:]
+            eqString = eqString[0:rootCursor] + r"\sqrt[" + e1 + r"]{" + e2 + \
+                r"}" + eqString[elem2[1]+1:]
         except ValueError:
             return eqString
     return eqString
@@ -197,7 +194,6 @@ def replaceFrac(eqString: str) -> str:
     return eqString
 
 
-
 def replaceAllBrace(eqString: str) -> str:
     '''
     replace (over, under)brace equation string.
@@ -214,11 +210,12 @@ def replaceAllBrace(eqString: str) -> str:
                 eStart2, eEnd2 = _findBrackets(eqString, eEnd1, direction=1)
                 elem1 = eqString[eStart1:eEnd1]
                 elem2 = eqString[eStart2:eEnd2]
-                
+
                 beforeBrace = eqString[0:cursor]
                 afterBrace = eqString[eEnd2:]
 
-                eqString = beforeBrace + braceElem + elem1 + '^' + elem2 + afterBrace
+                eqString = beforeBrace + braceElem + elem1 + '^' + elem2 +\
+                    afterBrace
             except ValueError:
                 return eqString
         return eqString
