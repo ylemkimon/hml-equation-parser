@@ -44,7 +44,14 @@ def parseHml(fileName: str) -> Tuple[ElementTree, ElementTree]:
         if text is not None:
             for child in text:
                 if child.tag == "CHAR":
-                    value = child.text
+                    value = child.text or ''
+                    for charChild in child:
+                        if charChild.tag == 'LINEBREAK':
+                            value += '<br>\n'
+                        else:
+                            print("unsupported char tag: {}"
+                                  .format(charChild.tag))
+                        value += charChild.tail or ''
 
                     if value is not None:
                         leafNode = Element(config["NodeNames"]["char"])
@@ -67,7 +74,7 @@ def parseHml(fileName: str) -> Tuple[ElementTree, ElementTree]:
                         parseParagraphNode(solRoot, paragraph)
 
                 else:
-                    print("not supported tag: {}".format(child.tag))
+                    print("unsupported tag: {}".format(child.tag))
 
             root.append(paragraphNode)
 
