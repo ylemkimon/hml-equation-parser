@@ -4,6 +4,11 @@ import codecs
 import os
 from .hulkReplaceMethod import (replaceAllMatrix, replaceAllBar, replaceRootOf,
                                 replaceFrac, replaceAllBrace)
+from .EqRegularizer import (sqrtRegularizer, barRegularizer, fracRegularizer,
+                            limRegularizer,  sumRegularizer, matchCurlyBraces,
+                            inEqualityRegularizer, bracketRegularizer,
+                            expRegularizer, fontRegularizer, backslashRemover,
+                            textRegularizer, matchBraces)
 
 with codecs.open(os.path.join(os.path.dirname(__file__), "convertMap.json"),
                  "r", "utf8") as f:
@@ -38,12 +43,33 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
                     strList[i] = r'\}'
         return strList
 
-    strConverted = hmlEqStr.replace('`', ' ')
+    strConverted = hmlEqStr.replace('`', ' ').replace('~', ' ')
     strConverted = strConverted.replace('{', ' { ')
     strConverted = strConverted.replace('}', ' } ')
+    strConverted = strConverted.replace('(', ' ( ')
+    strConverted = strConverted.replace(')', ' ) ')
     strConverted = strConverted.replace('&', ' & ')
 
     strList = strConverted.split(' ')
+
+    strList = list(filter(lambda x: x != "", strList))
+
+    strList = bracketRegularizer(strList)
+    #strList = fontRegularizer(strList)
+
+    strList = matchCurlyBraces(strList)
+    strList = inEqualityRegularizer(strList)
+    strList = textRegularizer(strList)
+
+    strList = sqrtRegularizer(strList)
+    strList = expRegularizer(strList, True)
+    strList = barRegularizer(strList)
+    strList = fracRegularizer(strList)
+    strList = limRegularizer(strList)
+    strList = sumRegularizer(strList)
+    strList = expRegularizer(strList, False)
+    strList = fontRegularizer(strList)
+    strList = matchBraces(strList)
 
     for key, candidate in enumerate(strList):
         if candidate in convertMap["convertMap"]:
@@ -53,10 +79,12 @@ def hmlEquation2latex(hmlEqStr: str) -> str:
 
     strList = [string for string in strList if len(string) != 0]
     strList = replaceBracket(strList)
+    strList = backslashRemover(strList)
 
     strConverted = ' '.join(strList)
 
-    strConverted = replaceFrac(strConverted)
+
+    #strConverted = replaceFrac(strConverted)
     strConverted = replaceRootOf(strConverted)
     strConverted = replaceAllMatrix(strConverted)
     strConverted = replaceAllBar(strConverted)

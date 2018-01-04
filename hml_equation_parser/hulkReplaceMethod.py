@@ -73,7 +73,6 @@ def replaceAllBar(eqString: str) -> str:
     '''
     def replaceBar(eqString: str, barStr: str, barElem: str) -> str:
         cursor = 0
-
         while True:
             cursor = eqString.find(barStr)
             if cursor == -1:
@@ -83,8 +82,12 @@ def replaceAllBar(eqString: str) -> str:
                 bStart, bEnd = _findOutterBrackets(eqString, cursor)
                 elem = eqString[eStart:eEnd]
 
-                beforeBar = eqString[0:bStart]
-                afterBar = eqString[bEnd:]
+                beforeBar = eqString[0:bStart+1]
+                afterBar = eqString[bEnd-1:]
+
+                if cursor == 0 or bStart > eStart:
+                    beforeBar = ''
+                    afterBar = eqString[eEnd:]
 
                 eqString = beforeBar + barElem + elem + afterBar
             except ValueError:
